@@ -1,26 +1,101 @@
 @import "tailwindcss";
 
+/* macOS-inspired semantic colors. Follows the system appearance, like a native app. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --bg-grouped: #f5f5f7;
+  --surface: #ffffff;
+  --label: rgb(0 0 0 / 0.88);
+  --label-2: rgb(0 0 0 / 0.54);
+  --label-3: rgb(0 0 0 / 0.3);
+  --separator: rgb(0 0 0 / 0.09);
+  --fill: rgb(0 0 0 / 0.045);
+  --fill-2: rgb(0 0 0 / 0.08);
+  --accent: #007aff;
+  --danger: #ff3b30;
+  --toolbar: rgb(255 255 255 / 0.74);
+  --shadow-card: 0 0 0 0.5px rgb(0 0 0 / 0.1), 0 1px 2px rgb(0 0 0 / 0.06), 0 6px 20px -8px rgb(0 0 0 / 0.14);
+  --shadow-card-hover: 0 0 0 0.5px rgb(0 0 0 / 0.12), 0 2px 4px rgb(0 0 0 / 0.06), 0 18px 40px -14px rgb(0 0 0 / 0.28);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #161617;
+    --bg-grouped: #1c1c1e;
+    --surface: #242426;
+    --label: rgb(255 255 255 / 0.9);
+    --label-2: rgb(255 255 255 / 0.55);
+    --label-3: rgb(255 255 255 / 0.28);
+    --separator: rgb(255 255 255 / 0.09);
+    --fill: rgb(255 255 255 / 0.06);
+    --fill-2: rgb(255 255 255 / 0.1);
+    --accent: #0a84ff;
+    --danger: #ff453a;
+    --toolbar: rgb(22 22 23 / 0.72);
+    --shadow-card: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px -8px rgb(0 0 0 / 0.6);
+    --shadow-card-hover: 0 0 0 0.5px rgb(255 255 255 / 0.14), 0 2px 4px rgb(0 0 0 / 0.4), 0 18px 40px -14px rgb(0 0 0 / 0.8);
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-grouped: var(--bg-grouped);
+  --color-surface: var(--surface);
+  --color-label: var(--label);
+  --color-label-2: var(--label-2);
+  --color-label-3: var(--label-3);
+  --color-separator: var(--separator);
+  --color-fill: var(--fill);
+  --color-fill-2: var(--fill-2);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-toolbar: var(--toolbar);
+  --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
+  --ease-mac: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--label);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+:focus-visible {
+  outline: 3.5px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 1px;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.animate-appear {
+  animation: appear 0.6s var(--ease-mac) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

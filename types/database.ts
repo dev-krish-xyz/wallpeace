@@ -1,0 +1,48 @@
+// Mirrors supabase/migrations. Regenerate with:
+//   npx supabase gen types typescript --project-id <ref> > types/database.ts
+export type Database = {
+  public: {
+    Tables: {
+      wallpapers: {
+        Row: {
+          id: string;
+          title: string;
+          slug: string;
+          file_url: string;
+          width: number;
+          height: number;
+          featured: boolean;
+          blur_data_url: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          slug: string;
+          file_url: string;
+          width: number;
+          height: number;
+          featured?: boolean;
+          blur_data_url?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["wallpapers"]["Insert"]>;
+        Relationships: [];
+      };
+      admins: {
+        Row: { user_id: string };
+        Insert: { user_id: string };
+        Update: { user_id?: string };
+        Relationships: [];
+      };
+    };
+    Views: { [_ in never]: never };
+    Functions: {
+      is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+    };
+    Enums: { [_ in never]: never };
+    CompositeTypes: { [_ in never]: never };
+  };
+};
+
+export type Wallpaper = Database["public"]["Tables"]["wallpapers"]["Row"];

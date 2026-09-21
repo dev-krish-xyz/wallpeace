@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wallpeace
 
-## Getting Started
+A small, curated library of original desktop wallpapers, previewed on a 3D MacBook.
 
-First, run the development server:
+Next.js 15 · Tailwind v4 · React Three Fiber · Supabase (Postgres, Storage, Auth) · Vercel
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Setup
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. **Create a Supabase project** in the same region you'll deploy Vercel functions to.
+2. **Apply the schema.** Run `supabase/migrations/0001_init.sql` in the SQL editor, or `npx supabase link && npx supabase db push`.
+   It creates the `wallpapers` table, the `admins` allowlist, RLS policies and the public `wallpapers` storage bucket.
+3. **Lock down auth.** In Authentication → Sign In / Providers, turn **off** "Allow new users to sign up".
+   Invite yourself under Authentication → Users, then add yourself as admin:
+   ```sql
+   insert into public.admins (user_id) select id from auth.users where email = 'you@example.com';
+   ```
+4. **Redirect URLs.** In Authentication → URL Configuration, add `http://localhost:3000/auth/callback` and your production/preview `…/auth/callback` URLs.
+5. **Env.** `cp .env.example .env.local` and fill in the project URL and publishable (anon) key.
+6. `npm run dev` → sign in at `/admin/login`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Import the repo in Vercel, set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `NEXT_PUBLIC_SITE_URL`, deploy.
+No service-role key is needed: every write runs as the signed-in admin and is enforced by RLS.
 
-## Learn More
+## How it works
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Gallery `/`** and **detail `/w/[slug]`** are statically rendered from one cached query (tag `wallpapers`), revalidated whenever the admin publishes, renames, features or deletes.
+- **Storage layout:** `wallpapers/{id}/original.*` (download), `display.webp` (2560w, gallery via `next/image`), `screen.webp` (2560×1600 cover crop, 3D screen texture).
+- **Upload:** the browser sends the original straight to Storage via a signed URL, then a server action validates it with sharp, renders the derivatives and a blur placeholder, and inserts the row.
+- **3D MacBook** is procedural (`components/preview/MacBook.tsx`), real 14" proportions, no model download. A flat CSS laptop paints first and remains as the fallback without WebGL.
