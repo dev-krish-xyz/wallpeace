@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "admin:password": "node scripts/set-admin-password.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",

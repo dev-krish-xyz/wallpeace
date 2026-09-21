@@ -9,18 +9,18 @@ Next.js 15 · Tailwind v4 · React Three Fiber · Supabase (Postgres, Storage, A
 1. **Create a Supabase project** in the same region you'll deploy Vercel functions to.
 2. **Apply the schema.** Run `supabase/migrations/0001_init.sql` in the SQL editor, or `npx supabase link && npx supabase db push`.
    It creates the `wallpapers` table, the `admins` allowlist, RLS policies and the public `wallpapers` storage bucket.
-3. **Lock down auth.** In Authentication → Sign In / Providers, turn **off** "Allow new users to sign up".
-   Invite yourself under Authentication → Users, then add yourself as admin:
+3. **Lock down auth.** Public signups are disabled via `supabase/config.toml` (`npx supabase config push`).
+   Create the admin user once (Authentication → Users → Add user, auto-confirm), then allow it:
    ```sql
    insert into public.admins (user_id) select id from auth.users where email = 'you@example.com';
    ```
-4. **Redirect URLs.** In Authentication → URL Configuration, add `http://localhost:3000/auth/callback` and your production/preview `…/auth/callback` URLs.
-5. **Env.** `cp .env.example .env.local` and fill in the project URL and publishable (anon) key.
-6. `npm run dev` → sign in at `/admin/login`.
+4. **Env.** `cp .env.example .env.local`, fill in the Supabase URL, publishable key and `ADMIN_EMAIL`.
+5. **Password.** `npm run admin:password` (prompts, hidden input, min 12 characters).
+6. `npm run dev` → sign in at `/admin/login` with username `admin`.
 
 ## Deploy
 
-Import the repo in Vercel, set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `NEXT_PUBLIC_SITE_URL`, deploy.
+Import the repo in Vercel, set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL`, `ADMIN_USERNAME` and `ADMIN_EMAIL`, deploy.
 No service-role key is needed: every write runs as the signed-in admin and is enforced by RLS.
 
 ## How it works

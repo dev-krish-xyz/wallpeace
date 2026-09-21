@@ -1,52 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
+import { login, type LoginState } from "@/app/admin/login/actions";
 import { Button } from "@/components/ui/Button";
-import { createSupabaseBrowser } from "@/lib/supabase/client";
 
-export function LoginForm({ initialError }: { initialError?: string }) {
-  const [email, setEmail] = useState("");
-  const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
-  const [error, setError] = useState(initialError);
+const field =
+  "h-9 w-full bg-transparent px-3 text-[13px] text-label outline-none placeholder:text-label-3 focus:bg-surface";
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setState("sending");
-    setError(undefined);
-    const { error } = await createSupabaseBrowser().auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: false, emailRedirectTo: `${location.origin}/auth/callback?next=/admin` },
-    });
-    if (error) {
-      setError(error.message);
-      setState("idle");
-    } else {
-      setState("sent");
-    }
-  }
-
-  if (state === "sent") {
-    return (
-      <p className="mt-7 rounded-[9px] bg-fill px-4 py-3 text-[13px] leading-relaxed text-label-2">
-        Check <span className="font-medium text-label">{email}</span> for a sign-in link.
-      </p>
-    );
-  }
+export function LoginForm() {
+  const [state, action, pending] = useActionState<LoginState, FormData>(login, {});
 
   return (
-    <form onSubmit={submit} className="mt-7 space-y-3 text-left">
-      <input
-        type="email"
-        required
-        autoComplete="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="h-9 w-full rounded-[8px] bg-fill px-3 text-[13px] text-label outline-none ring-[0.5px] ring-separator placeholder:text-label-3 focus:ring-[3.5px] focus:ring-accent/50"
-      />
-      {error && <p className="px-1 text-[12px] text-danger">{error}</p>}
-      <Button type="submit" variant="primary" className="w-full" disabled={state === "sending"}>
-        {state === "sending" ? "Sending…" : "Continue with Email"}
+    <form action={action} className="mt-7 space-y-3 text-left">
+      {/* Grouped fields, as in the macOS login window */}
+      <div className="overflow-hidden rounded-[8px] bg-fill ring-[0.5px] ring-separator focus-within:ring-[3.5px] focus-within:ring-accent/50">
+        <input
+          name="username"
+          required
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          placeholder="Username"
+          defaultValue={state.username}
+          className={field}
+        />
+        <div className="mx-3 h-px bg-separator" />
+        <input
+          name="password"
+          type="password"
+          required
+          autoComplete="current-password"
+          placeholder="Password"
+          className={field}
+        />
+      </div>
+      {state.error && (
+        <p role="alert" className="px-1 text-[12px] text-danger">
+          {state.error}
+        </p>
+      )}
+      <Button type="submit" variant="primary" className="w-full" disabled={pending}>
+        {pending ? "Signing In…" : "Sign In"}
       </Button>
     </form>
   );
