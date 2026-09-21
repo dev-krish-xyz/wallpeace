@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-/* macOS-inspired semantic colors. Follows the system appearance, like a native app. */
+/* macOS-inspired semantic colors. Light appearance only. */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --bg: #ffffff;
   --bg-grouped: #f5f5f7;
   --surface: #ffffff;
@@ -19,24 +19,6 @@
   --shadow-card-hover: 0 0 0 0.5px rgb(0 0 0 / 0.12), 0 2px 4px rgb(0 0 0 / 0.06), 0 18px 40px -14px rgb(0 0 0 / 0.28);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #161617;
-    --bg-grouped: #1c1c1e;
-    --surface: #242426;
-    --label: rgb(255 255 255 / 0.9);
-    --label-2: rgb(255 255 255 / 0.55);
-    --label-3: rgb(255 255 255 / 0.28);
-    --separator: rgb(255 255 255 / 0.09);
-    --fill: rgb(255 255 255 / 0.06);
-    --fill-2: rgb(255 255 255 / 0.1);
-    --accent: #0a84ff;
-    --danger: #ff453a;
-    --toolbar: rgb(22 22 23 / 0.72);
-    --shadow-card: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px -8px rgb(0 0 0 / 0.6);
-    --shadow-card-hover: 0 0 0 0.5px rgb(255 255 255 / 0.14), 0 2px 4px rgb(0 0 0 / 0.4), 0 18px 40px -14px rgb(0 0 0 / 0.8);
-  }
-}
 
 @theme inline {
   --color-bg: var(--bg);
