@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { BUCKET, MAX_UPLOAD_BYTES, WALLPAPERS_TAG } from "@/lib/env";
-import { IMAGE_CACHE_CONTROL, processWallpaper } from "@/lib/images";
 import { slugify } from "@/lib/slug";
 import { publicUrl, storagePaths } from "@/lib/storage";
 
@@ -68,6 +67,8 @@ export async function finalizeUpload(input: z.input<typeof finalizeSchema>): Pro
 
     const { data: blob, error: dlError } = await supabase.storage.from(BUCKET).download(path);
     if (dlError) throw dlError;
+    // Loaded on demand so the admin page itself never depends on the native image library.
+    const { IMAGE_CACHE_CONTROL, processWallpaper } = await import("@/lib/images");
     const image = await processWallpaper(Buffer.from(await blob.arrayBuffer()));
 
     const store = supabase.storage.from(BUCKET);

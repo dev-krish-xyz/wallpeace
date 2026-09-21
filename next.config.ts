@@ -5,6 +5,11 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   : undefined;
 
 const nextConfig: NextConfig = {
+  // Turbopack's tracer misses sharp's platform binary (@img/sharp-<os>-<arch>/lib/*.node + libvips),
+  // so the admin function (where uploads are processed) would ship without it.
+  outputFileTracingIncludes: {
+    "/admin": ["./node_modules/@img/sharp-*/**/*"],
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 365,
