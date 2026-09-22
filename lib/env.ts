@@ -6,3 +6,11 @@ export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
 export const BUCKET = "wallpapers";
 export const WALLPAPERS_TAG = "wallpapers";
+
+// Absolute origin for canonical URLs, the sitemap and structured data.
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000")
+).replace(/\/$/, "");

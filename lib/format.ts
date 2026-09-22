@@ -23,3 +23,9 @@ export function formatAspect(w: number, h: number) {
   const d = gcd(w, h);
   return `${w / d}:${h / d}`;
 }
+
+export const MAX_DESCRIPTION = 300;
+
+/** The written description, or a plain factual line when there isn't one yet. */
+export const describeWallpaper = (w: { title: string; width: number; height: number; description: string | null }) =>
+  w.description ?? `${w.title}, an original ${formatResolution(w.width, w.height)} desktop wallpaper.`;

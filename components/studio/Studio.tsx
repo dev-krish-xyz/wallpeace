@@ -26,7 +26,19 @@ function useSettled<T>(value: T, delay: number) {
   return settled;
 }
 
-export function Studio({ wallpapers, initialId }: { wallpapers: Wallpaper[]; initialId: string }) {
+/**
+ * `heading`: the page's H1 (visually hidden). Without it, the selected wallpaper's title is the H1,
+ * which is what a /w/[slug] page is about.
+ */
+export function Studio({
+  wallpapers,
+  initialId,
+  heading,
+}: {
+  wallpapers: Wallpaper[];
+  initialId: string;
+  heading?: string;
+}) {
   const [selectedId, setSelectedId] = useState(initialId);
   const [finish, setFinish] = useState<Finish>("silver");
   const [view, setView] = useState(0);
@@ -99,12 +111,14 @@ export function Studio({ wallpapers, initialId }: { wallpapers: Wallpaper[]; ini
     return () => window.removeEventListener("keydown", onKey);
   }, [index, wallpapers, select]);
 
+  const Title = heading ? "h2" : "h1";
+
   return (
     <div className="flex flex-col lg:grid lg:h-[calc(100dvh-52px)] lg:grid-cols-[40%_1fr]">
       {/* Sidebar carousel */}
       <aside className="relative order-2 border-separator bg-grouped pt-4 pb-2 lg:order-1 lg:min-h-0 lg:border-r lg:p-0">
-        <div className="mb-2 flex items-baseline justify-between px-5 lg:absolute lg:inset-x-0 lg:top-0 lg:z-10 lg:mb-0 lg:px-6 lg:pt-5">
-          <h1 className="text-[13px] font-semibold text-label">Wallpapers</h1>
+        <div className="mb-2 flex items-baseline justify-end px-5 lg:absolute lg:inset-x-0 lg:top-0 lg:z-10 lg:mb-0 lg:px-6 lg:pt-5">
+          {heading && <h1 className="sr-only">{heading}</h1>}
           <span className="text-[12px] text-label-3 tabular-nums">
             {index + 1} of {wallpapers.length}
           </span>
@@ -112,6 +126,16 @@ export function Studio({ wallpapers, initialId }: { wallpapers: Wallpaper[]; ini
         <div className="h-[46vw] sm:h-[30vw] lg:h-full">
           <WallpaperRail wallpapers={wallpapers} selectedId={selected.id} onSelect={select} onPreload={preload} />
         </div>
+        {/* Plain links to every wallpaper page, for crawlers and screen readers; the rail is the visual equivalent. */}
+        <nav aria-label="All wallpapers" className="sr-only">
+          <ul>
+            {wallpapers.map((w) => (
+              <li key={w.id}>
+                <a href={`/w/${w.slug}`}>{w.title}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </aside>
 
       {/* Stage */}
@@ -132,13 +156,16 @@ export function Studio({ wallpapers, initialId }: { wallpapers: Wallpaper[]; ini
         <div className="flex flex-col gap-4 px-5 pt-2 pb-6 sm:flex-row sm:items-end sm:justify-between lg:px-10 lg:pb-8">
           <div className="min-w-0">
             {selected.featured && <p className="mb-0.5 text-[12px] font-semibold text-accent">Featured</p>}
-            <h2 className="truncate font-display text-[22px] font-semibold tracking-[-0.015em] text-label">
+            <Title className="truncate font-display text-[22px] font-semibold tracking-[-0.015em] text-label">
               {selected.title}
-            </h2>
+            </Title>
             <p className="mt-0.5 text-[13px] text-label-2 tabular-nums">
               {formatResolution(selected.width, selected.height)} · {formatAspect(selected.width, selected.height)} ·{" "}
               {formatDate(selected.created_at)}
             </p>
+            {selected.description && (
+              <p className="mt-1.5 line-clamp-2 max-w-[60ch] text-[13px] leading-snug text-label-2">{selected.description}</p>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-3">
             <Segmented

@@ -10,6 +10,17 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/admin": ["./node_modules/@img/sharp-*/**/*"],
   },
+  // One canonical host: www.wallpeace.com → wallpeace.com.
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.wallpeace.com" }],
+        destination: "https://wallpeace.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 365,

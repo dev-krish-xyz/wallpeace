@@ -4,7 +4,7 @@ import { WALLPAPERS_TAG, isSupabaseConfigured } from "@/lib/env";
 import { createSupabasePublic } from "@/lib/supabase/server";
 import type { Wallpaper } from "@/types/database";
 
-export const WALLPAPER_COLUMNS = "id,title,slug,file_url,width,height,featured,blur_data_url,created_at";
+export const WALLPAPER_COLUMNS = "id,title,slug,file_url,width,height,featured,description,blur_data_url,created_at";
 
 /** Whole library, newest first. Small by design, so one cached list backs every page. */
 export const getWallpapers = unstable_cache(

@@ -5,12 +5,20 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { BUCKET, WALLPAPERS_TAG } from "@/lib/env";
+import { MAX_DESCRIPTION } from "@/lib/format";
 import { slugify } from "@/lib/slug";
 import { publicUrl, storagePaths } from "@/lib/storage";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { MAX_UPLOAD_BYTES, UPLOAD_TYPES } from "@/lib/uploads";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
+
+// Blank means "no description" (null), so pages fall back to the generated line.
+const descriptionSchema = z
+  .string()
+  .trim()
+  .max(MAX_DESCRIPTION, `Description must be ${MAX_DESCRIPTION} characters or fewer.`)
+  .transform((d) => d || null);
 
 const fail = (e: unknown): { ok: false; error: string } => ({
   ok: false,
@@ -49,6 +57,7 @@ const finalizeSchema = z.object({
   title: z.string().trim().min(1, "Title is required.").max(120),
   slug: z.string().trim().max(80),
   featured: z.boolean(),
+  description: descriptionSchema.optional(),
 });
 
 /** Step 2: derive web images from the uploaded original, then publish the row. */
@@ -56,7 +65,7 @@ export async function finalizeUpload(input: z.input<typeof finalizeSchema>): Pro
   let supabase: Awaited<ReturnType<typeof requireAdmin>>["supabase"] | null = null;
   const parsed = finalizeSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
-  const { id, path, title, featured } = parsed.data;
+  const { id, path, title, featured, description = null } = parsed.data;
   const paths = storagePaths(id);
 
   try {
@@ -88,6 +97,7 @@ export async function finalizeUpload(input: z.input<typeof finalizeSchema>): Pro
       width: image.width,
       height: image.height,
       featured,
+      description,
       blur_data_url: image.blurDataUrl,
     });
     if (insertError) throw insertError;
@@ -129,6 +139,25 @@ export async function renameWallpaper(id: string, title: string): Promise<Result
     if (!clean || clean.length > 120) return { ok: false, error: "Title must be 1–120 characters." };
     const { supabase } = await requireAdmin();
     const { data, error } = await supabase.from("wallpapers").update({ title: clean }).eq("id", id).select("slug").single();
+    if (error) throw error;
+    refresh(data.slug);
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function setDescription(id: string, description: string): Promise<Result> {
+  try {
+    const parsed = descriptionSchema.safeParse(description);
+    if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+    const { supabase } = await requireAdmin();
+    const { data, error } = await supabase
+      .from("wallpapers")
+      .update({ description: parsed.data })
+      .eq("id", id)
+      .select("slug")
+      .single();
     if (error) throw error;
     refresh(data.slug);
     return { ok: true };

@@ -12,6 +12,7 @@ export type Database = {
           width: number;
           height: number;
           featured: boolean;
+          description: string | null;
           blur_data_url: string | null;
           created_at: string;
         };
@@ -23,6 +24,7 @@ export type Database = {
           width: number;
           height: number;
           featured?: boolean;
+          description?: string | null;
           blur_data_url?: string | null;
           created_at?: string;
         };

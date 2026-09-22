@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { deleteWallpaper, renameWallpaper, setFeatured } from "@/app/admin/actions";
+import { deleteWallpaper, renameWallpaper, setDescription, setFeatured } from "@/app/admin/actions";
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
-import { formatDate, formatResolution } from "@/lib/format";
+import { MAX_DESCRIPTION, formatDate, formatResolution } from "@/lib/format";
 import { displayUrl } from "@/lib/storage";
 import type { Wallpaper } from "@/types/database";
 
@@ -31,6 +31,7 @@ function LibraryRow({ wallpaper: w }: { wallpaper: Wallpaper }) {
   const [pending, startTransition] = useTransition();
   const [featured, setOptimisticFeatured] = useOptimistic(w.featured);
   const [title, setTitle] = useState(w.title);
+  const [description, updateDescription] = useState(w.description ?? "");
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -60,6 +61,18 @@ function LibraryRow({ wallpaper: w }: { wallpaper: Wallpaper }) {
           {formatResolution(w.width, w.height)} · {formatDate(w.created_at)}
           {error && <span className="ml-2 text-danger">{error}</span>}
         </p>
+        <textarea
+          aria-label="Description"
+          placeholder="Add a description…"
+          value={description}
+          maxLength={MAX_DESCRIPTION}
+          rows={2}
+          onChange={(e) => updateDescription(e.target.value)}
+          onBlur={() =>
+            description.trim() !== (w.description ?? "") && run(() => setDescription(w.id, description))
+          }
+          className="mt-1 block w-full resize-none rounded-[6px] bg-transparent px-1.5 py-1 text-[12px] leading-snug text-label-2 outline-none placeholder:text-label-3 hover:bg-fill focus:bg-surface focus:ring-[3px] focus:ring-accent/45"
+        />
       </div>
       <label className="hidden items-center gap-2 text-[12px] text-label-2 sm:flex">
         Featured

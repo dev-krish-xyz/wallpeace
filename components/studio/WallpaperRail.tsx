@@ -339,7 +339,7 @@ export function WallpaperRail({
           >
             <Image
               src={displayUrl(w)}
-              alt=""
+              alt={`${w.title} desktop wallpaper`}
               fill
               sizes="(min-width: 1024px) 460px, 64vw"
               loading={Math.abs(i - restingIndex) < 3 ? "eager" : "lazy"}

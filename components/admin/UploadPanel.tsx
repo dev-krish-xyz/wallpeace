@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
 import { Check, Plus, XMark } from "@/components/ui/icons";
 import { slugify, titleFromFilename } from "@/lib/slug";
+import { MAX_DESCRIPTION } from "@/lib/format";
 import { ACCEPTED_TYPES, MAX_UPLOAD_BYTES } from "@/lib/uploads";
 import { uploadOriginal } from "./uploadOriginal";
 
@@ -19,6 +20,7 @@ type Item = {
   title: string;
   slug: string;
   slugTouched: boolean;
+  description: string;
   featured: boolean;
   status: Status;
   progress: number;
@@ -62,6 +64,7 @@ export function UploadPanel() {
           title,
           slug: slugify(title),
           slugTouched: false,
+          description: "",
           featured: false,
           status: tooBig ? "error" : "ready",
           progress: 0,
@@ -91,6 +94,7 @@ export function UploadPanel() {
         path: reserved.path,
         title: item.title,
         slug: item.slug,
+        description: item.description,
         featured: item.featured,
       });
       if (!result.ok) throw new Error(result.error);
@@ -184,6 +188,16 @@ export function UploadPanel() {
                           className="min-w-0 flex-1 rounded-[4px] bg-transparent text-label-2 outline-none focus:bg-surface focus:ring-[3px] focus:ring-accent/45"
                         />
                       </div>
+                      <textarea
+                        aria-label="Description"
+                        placeholder="Description (optional): mood, colors, what it shows"
+                        value={item.description}
+                        disabled={locked}
+                        maxLength={MAX_DESCRIPTION}
+                        rows={2}
+                        onChange={(e) => update(item.key, { description: e.target.value })}
+                        className="w-full resize-none rounded-[6px] bg-transparent px-1.5 py-1 text-[12px] leading-snug text-label-2 outline-none placeholder:text-label-3 hover:bg-fill focus:bg-surface focus:ring-[3px] focus:ring-accent/45 disabled:hover:bg-transparent"
+                      />
                     </div>
                     <div className="flex items-center justify-between gap-4 sm:justify-end">
                       <label className="flex items-center gap-2 text-[12px] text-label-2">

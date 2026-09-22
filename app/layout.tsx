@@ -1,10 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import { SITE_URL } from "@/lib/env";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Wallpeace", template: "%s — Wallpeace" },
   description: "A small, carefully made library of original desktop wallpapers.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(SITE_URL),
+  openGraph: { type: "website", siteName: "Wallpeace" },
+  twitter: { card: "summary_large_image" },
+  // Google Search Console HTML-tag verification; only the token, e.g. "abc123…".
+  verification: { google: process.env.GOOGLE_SITE_VERIFICATION },
 };
 
 export const viewport: Viewport = {

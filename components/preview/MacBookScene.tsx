@@ -14,7 +14,7 @@ function Framing() {
   const { camera, size, invalidate } = useThree();
   useLayoutEffect(() => {
     const aspect = size.width / size.height;
-    const distance = 6.6 * Math.max(1, 1.62 / aspect);
+    const distance = 6.0 * Math.max(1, 1.62 / aspect);
     camera.position.set(0, 1.7, distance);
     camera.lookAt(...TARGET);
     camera.updateProjectionMatrix();
