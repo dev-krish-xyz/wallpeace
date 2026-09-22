@@ -4,8 +4,8 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
-import { BUCKET, WALLPAPERS_TAG } from "@/lib/env";
-import { COLLECTION_SLUGS } from "@/lib/collections";
+import { BUCKET, CATEGORIES_TAG, WALLPAPERS_TAG } from "@/lib/env";
+import { MAX_CATEGORY_BLURB, MAX_CATEGORY_NAME } from "@/lib/collections";
 import { MAX_DESCRIPTION } from "@/lib/format";
 import { slugify } from "@/lib/slug";
 import { publicUrl, storagePaths } from "@/lib/storage";
@@ -168,21 +168,100 @@ export async function setDescription(id: string, description: string): Promise<R
   }
 }
 
-const collectionsSchema = z.array(z.enum(COLLECTION_SLUGS as [string, ...string[]])).transform((c) => [...new Set(c)]);
-
 export async function setCollections(id: string, collections: string[]): Promise<Result> {
   try {
-    const parsed = collectionsSchema.safeParse(collections);
-    if (!parsed.success) return { ok: false, error: "Unknown collection." };
     const { supabase } = await requireAdmin();
+    const wanted = [...new Set(collections)];
+    // Categories are rows now, so the list is checked against the table rather than a constant.
+    const { data: known, error: knownError } = await supabase.from("categories").select("slug").in("slug", wanted);
+    if (knownError) throw knownError;
+    if ((known?.length ?? 0) !== wanted.length) return { ok: false, error: "Unknown category." };
+
     const { data, error } = await supabase
       .from("wallpapers")
-      .update({ collections: parsed.data })
+      .update({ collections: wanted })
       .eq("id", id)
       .select("slug")
       .single();
     if (error) throw error;
     refresh(data.slug);
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ─── Categories ──────────────────────────────────────────────────────────────
+
+function refreshCategories() {
+  revalidateTag(CATEGORIES_TAG);
+  revalidatePath("/collections");
+}
+
+const categorySchema = z.object({
+  name: z.string().trim().min(1, "Name is required.").max(MAX_CATEGORY_NAME),
+  blurb: z
+    .string()
+    .trim()
+    .max(MAX_CATEGORY_BLURB, `Description must be ${MAX_CATEGORY_BLURB} characters or fewer.`)
+    .transform((b) => b || null)
+    .optional(),
+});
+
+export async function createCategory(input: { name: string; blurb?: string }): Promise<Result<{ slug: string }>> {
+  const parsed = categorySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  try {
+    const { supabase } = await requireAdmin();
+    const slug = slugify(parsed.data.name);
+    if (!slug) return { ok: false, error: "That name has no letters or numbers in it." };
+    const { data: existing } = await supabase.from("categories").select("slug").eq("slug", slug).maybeSingle();
+    if (existing) return { ok: false, error: "That category already exists." };
+    // New categories go to the end of the list.
+    const { data: last } = await supabase.from("categories").select("position").order("position", { ascending: false }).limit(1);
+    const { error } = await supabase.from("categories").insert({
+      slug,
+      name: parsed.data.name,
+      blurb: parsed.data.blurb ?? null,
+      position: (last?.[0]?.position ?? 0) + 1,
+    });
+    if (error) throw error;
+    refreshCategories();
+    return { ok: true, slug };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Renames a category, or changes its description. The slug (and so its URL) stays put. */
+export async function updateCategory(slug: string, input: { name: string; blurb?: string }): Promise<Result> {
+  const parsed = categorySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  try {
+    const { supabase } = await requireAdmin();
+    const { error } = await supabase
+      .from("categories")
+      .update({ name: parsed.data.name, blurb: parsed.data.blurb ?? null })
+      .eq("slug", slug);
+    if (error) throw error;
+    refreshCategories();
+    revalidatePath(`/collections/${slug}`);
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Deletes a category and takes it off every wallpaper that had it. */
+export async function deleteCategory(slug: string): Promise<Result> {
+  try {
+    const { supabase } = await requireAdmin();
+    const { error: detachError } = await supabase.rpc("detach_category", { p_slug: slug });
+    if (detachError) throw detachError;
+    const { error } = await supabase.from("categories").delete().eq("slug", slug);
+    if (error) throw error;
+    refreshCategories();
+    refresh();
     return { ok: true };
   } catch (e) {
     return fail(e);

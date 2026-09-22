@@ -5,24 +5,23 @@ import { WallpaperGrid } from "@/components/gallery/WallpaperCard";
 import { PageBody, PageHeader } from "@/components/site/Section";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { ChevronLeft } from "@/components/ui/icons";
-import { COLLECTIONS, getCollection } from "@/lib/collections";
+import { getCollection, getCollections } from "@/lib/collections";
 import { getWallpapers, inCollection } from "@/lib/wallpapers";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return COLLECTIONS.map((c) => ({ slug: c.slug }));
+// A category added in admin gets its page on first request, without a rebuild.
+export async function generateStaticParams() {
+  return (await getCollections()).map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const collection = getCollection((await params).slug);
+  const collection = await getCollection((await params).slug);
   if (!collection) return {};
   const items = inCollection(await getWallpapers(), collection.slug);
   return {
     title: `${collection.name} Wallpapers`,
-    description: collection.blurb,
+    description: collection.blurb ?? `${collection.name} desktop wallpapers, made for Wallpeace.`,
     alternates: { canonical: `/collections/${collection.slug}` },
     // An empty collection is a thin page; keep it out of search until it has wallpapers.
     robots: items.length ? undefined : { index: false },
@@ -30,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CollectionPage({ params }: Props) {
-  const collection = getCollection((await params).slug);
+  const collection = await getCollection((await params).slug);
   if (!collection) notFound();
   const items = inCollection(await getWallpapers(), collection.slug);
 
@@ -47,7 +46,7 @@ export default async function CollectionPage({ params }: Props) {
         </Link>
         <PageHeader
           title={collection.name}
-          subtitle={`${collection.blurb} ${items.length} ${items.length === 1 ? "wallpaper" : "wallpapers"}.`}
+          subtitle={`${collection.blurb ?? ""} ${items.length} ${items.length === 1 ? "wallpaper" : "wallpapers"}.`}
         />
         {items.length ? (
           <WallpaperGrid wallpapers={items} priorityCount={3} />

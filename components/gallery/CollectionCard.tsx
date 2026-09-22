@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { HOVER_ZOOM } from "./WallpaperCard";
 import type { Collection } from "@/lib/collections";
 import { displayUrl } from "@/lib/storage";
 import type { Wallpaper } from "@/types/database";
@@ -25,7 +26,7 @@ export function CollectionCard({
             sizes="(min-width: 1200px) 370px, (min-width: 1024px) 30vw, (min-width: 640px) 50vw, 100vw"
             placeholder={cover.blur_data_url ? "blur" : "empty"}
             blurDataURL={cover.blur_data_url ?? undefined}
-            className="object-cover"
+            className={`object-cover${HOVER_ZOOM}`}
           />
         )}
       </div>

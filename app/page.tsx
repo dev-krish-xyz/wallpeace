@@ -4,13 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { WallpaperGrid } from "@/components/gallery/WallpaperCard";
 import { PremiumTeaser } from "@/components/site/Premium";
+import { Reveal } from "@/components/site/Reveal";
 import { PageBody, Section } from "@/components/site/Section";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { Studio } from "@/components/studio/Studio";
 import { ButtonLink } from "@/components/ui/Button";
 import { ArrowDown } from "@/components/ui/icons";
-import { COLLECTIONS } from "@/lib/collections";
-import { formatAspect, formatResolution } from "@/lib/format";
+import { ResolutionBadge } from "@/components/ui/ResolutionBadge";
+import { getCollections } from "@/lib/collections";
+import { displayTitle, formatAspect, formatResolution } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/env";
 import { displayUrl } from "@/lib/storage";
 import { getWallpapers, inCollection } from "@/lib/wallpapers";
@@ -21,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const wallpapers = await getWallpapers(); // newest first
+  const [wallpapers, categories] = await Promise.all([getWallpapers(), getCollections()]); // newest first
   // Open on the middle of the list so there's something to scroll to in both directions.
   const initial = wallpapers[Math.floor(wallpapers.length / 2)];
 
@@ -39,7 +41,7 @@ export default async function HomePage() {
   const latest = wallpapers.slice(0, 6);
   const featured = wallpapers.filter((w) => w.featured);
   // The curated pick: the largest collection that is a real subset of the library.
-  const curated = COLLECTIONS.map((c) => ({ c, items: inCollection(wallpapers, c.slug) }))
+  const curated = categories.map((c) => ({ c, items: inCollection(wallpapers, c.slug) }))
     .filter(({ items }) => items.length && items.length < wallpapers.length)
     .sort((a, b) => b.items.length - a.items.length)[0];
 
@@ -52,7 +54,12 @@ export default async function HomePage() {
   return (
     <>
       <SiteHeader />
-      <Studio wallpapers={wallpapers} initialId={initial.id} heading="Wallpeace — original desktop wallpapers" />
+      <Studio
+        wallpapers={wallpapers}
+        initialId={initial.id}
+        heading="Wallpeace — original desktop wallpapers"
+        syncUrl={false}
+      />
 
       <div className="border-t border-separator">
         <PageBody className="flex flex-col gap-16 lg:gap-20">
@@ -74,31 +81,33 @@ export default async function HomePage() {
             <Section
               eyebrow="Curated Collection"
               title={curated.c.name}
-              subtitle={curated.c.blurb}
+              subtitle={curated.c.blurb ?? undefined}
               action={{ href: `/collections/${curated.c.slug}`, label: "View Collection" }}
             >
               <WallpaperGrid wallpapers={curatedPicks} />
             </Section>
           )}
 
-          <PremiumTeaser />
+          <Reveal>
+            <PremiumTeaser />
+          </Reveal>
 
-          <section className="rounded-[14px] bg-grouped px-6 py-14 text-center">
-            <h2 className="font-display text-[22px] font-semibold tracking-[-0.015em] text-label">
-              Browse the Library
-            </h2>
-            <p className="mx-auto mt-1 max-w-[46ch] text-[13px] leading-snug text-label-2">
-              All {wallpapers.length} wallpapers, sorted by newest or most downloaded, or grouped into collections.
-            </p>
-            <div className="mt-5 flex justify-center gap-2">
-              <ButtonLink href="/browse" variant="primary" size="sm">
-                Browse All
-              </ButtonLink>
-              <ButtonLink href="/collections" variant="secondary" size="sm">
-                Collections
-              </ButtonLink>
-            </div>
-          </section>
+          <Reveal>
+            <section className="rounded-[14px] bg-grouped px-6 py-14 text-center">
+              <h2 className="font-display text-[22px] font-semibold tracking-[-0.015em] text-label">Browse the Library</h2>
+              <p className="mx-auto mt-1 max-w-[46ch] text-[13px] leading-snug text-label-2">
+                All {wallpapers.length} wallpapers, sorted by newest or most downloaded, or grouped into collections.
+              </p>
+              <div className="mt-5 flex justify-center gap-2">
+                <ButtonLink href="/browse" variant="primary" size="sm">
+                  Browse All
+                </ButtonLink>
+                <ButtonLink href="/collections" variant="secondary" size="sm">
+                  Collections
+                </ButtonLink>
+              </div>
+            </section>
+          </Reveal>
         </PageBody>
       </div>
     </>
@@ -109,12 +118,12 @@ export default async function HomePage() {
 function FeaturedList({ wallpapers: [lead, ...rest] }: { wallpapers: Wallpaper[] }) {
   return (
     <div className="flex flex-col gap-7">
-      <div className="grid items-center gap-5 lg:grid-cols-[2fr_1fr] lg:gap-10">
+      <Reveal className="grid items-center gap-5 lg:grid-cols-[2fr_1fr] lg:gap-10">
         <Link href={`/w/${lead.slug}`} className="group block rounded-[12px] outline-offset-4">
           <div className="relative aspect-[16/10] overflow-hidden rounded-[12px] bg-fill shadow-card transition-shadow duration-300 ease-(--ease-mac) group-hover:shadow-card-hover">
             <Image
               src={displayUrl(lead)}
-              alt={`${lead.title} desktop wallpaper`}
+              alt={`${displayTitle(lead.title)} desktop wallpaper`}
               fill
               sizes="(min-width: 1200px) 740px, (min-width: 1024px) 62vw, 100vw"
               placeholder={lead.blur_data_url ? "blur" : "empty"}
@@ -124,9 +133,11 @@ function FeaturedList({ wallpapers: [lead, ...rest] }: { wallpapers: Wallpaper[]
           </div>
         </Link>
         <div className="min-w-0">
-          <h3 className="font-display text-[22px] font-semibold tracking-[-0.015em] text-label">{lead.title}</h3>
-          <p className="mt-0.5 text-[13px] text-label-2 tabular-nums">
-            {formatResolution(lead.width, lead.height)} · {formatAspect(lead.width, lead.height)}
+          <h3 className="font-display text-[22px] font-semibold tracking-[-0.015em] text-label">{displayTitle(lead.title)}</h3>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-label-2 tabular-nums">
+            {formatResolution(lead.width, lead.height)}
+            <ResolutionBadge width={lead.width} height={lead.height} />
+            <span>· {formatAspect(lead.width, lead.height)}</span>
           </p>
           {lead.description && (
             <p className="mt-3 max-w-[46ch] text-[13px] leading-relaxed text-label-2">{lead.description}</p>
@@ -141,7 +152,7 @@ function FeaturedList({ wallpapers: [lead, ...rest] }: { wallpapers: Wallpaper[]
             </ButtonLink>
           </div>
         </div>
-      </div>
+      </Reveal>
       {rest.length > 0 && <WallpaperGrid wallpapers={rest} />}
     </div>
   );

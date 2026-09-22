@@ -100,10 +100,18 @@ export function MacBookStage({
       {webgl && (
         <div
           role="img"
-          aria-label={`${title} previewed on a MacBook. Drag to rotate.`}
+          aria-label={`${title} previewed on a MacBook. Drag to rotate${fullscreen ? ", pinch to zoom" : ""}.`}
           className={`absolute inset-0 transition-opacity duration-700 ease-(--ease-mac) ${ready ? "opacity-100" : "opacity-0"}`}
         >
-          <MacBookScene screenUrl={screenUrl} finish={finish} view={view} animate={!reducedMotion} onReady={onReady} />
+          <MacBookScene
+            screenUrl={screenUrl}
+            finish={finish}
+            view={view}
+            animate={!reducedMotion}
+            fullscreen={fullscreen !== null}
+            ready={ready}
+            onReady={onReady}
+          />
         </div>
       )}
       <button

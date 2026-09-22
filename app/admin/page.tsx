@@ -4,10 +4,12 @@ import { Brand, Toolbar } from "@/components/ui/Toolbar";
 import { Button } from "@/components/ui/Button";
 import { UploadPanel } from "@/components/admin/UploadPanel";
 import { LibraryList } from "@/components/admin/LibraryList";
+import { CategoryPanel } from "@/components/admin/CategoryPanel";
 import { EmptyLibrary } from "@/components/gallery/EmptyLibrary";
 import { getSession } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { WALLPAPER_COLUMNS } from "@/lib/wallpapers";
+import { CATEGORY_COLUMNS } from "@/lib/collections";
 import { signOut } from "./actions";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
@@ -49,11 +51,18 @@ export default async function AdminPage() {
     );
   }
 
-  const { data: wallpapers, error } = await supabase
-    .from("wallpapers")
-    .select(WALLPAPER_COLUMNS)
-    .order("created_at", { ascending: false });
+  const [{ data: wallpapers, error }, { data: categoryRows, error: categoryError }] = await Promise.all([
+    supabase.from("wallpapers").select(WALLPAPER_COLUMNS).order("created_at", { ascending: false }),
+    supabase.from("categories").select(CATEGORY_COLUMNS).order("position").order("name"),
+  ]);
   if (error) throw new Error(error.message);
+  if (categoryError) throw new Error(categoryError.message);
+
+  const categories = (categoryRows ?? []).map(({ slug, name, blurb }) => ({ slug, name, blurb }));
+  const counts = categories.reduce<Record<string, number>>((acc, c) => {
+    acc[c.slug] = wallpapers.filter((w) => w.collections.includes(c.slug)).length;
+    return acc;
+  }, {});
 
   return (
     <>
@@ -79,8 +88,12 @@ export default async function AdminPage() {
             <UploadPanel />
           </section>
           <section>
+            <h2 className="mb-2 px-1 text-[13px] font-semibold text-label-2">Categories</h2>
+            <CategoryPanel categories={categories} counts={counts} />
+          </section>
+          <section>
             <h2 className="mb-2 px-1 text-[13px] font-semibold text-label-2">Published</h2>
-            <LibraryList wallpapers={wallpapers} />
+            <LibraryList wallpapers={wallpapers} categories={categories} />
           </section>
         </div>
       </main>

@@ -6,6 +6,7 @@ export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
 export const BUCKET = "wallpapers";
 export const WALLPAPERS_TAG = "wallpapers";
+export const CATEGORIES_TAG = "categories";
 
 // Absolute origin for canonical URLs, the sitemap and structured data.
 export const SITE_URL = (

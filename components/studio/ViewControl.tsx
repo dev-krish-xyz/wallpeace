@@ -62,7 +62,7 @@ export function ViewControl({ value, onChange }: { value: number; onChange: (v: 
         setDragging(false);
         onChange(nearestStop(value));
       }}
-      className="group flex h-[30px] w-[176px] cursor-grab touch-none select-none items-center rounded-full bg-surface/80 px-3.5 shadow-[0_0_0_0.5px_rgb(0_0_0/0.1),0_6px_18px_-8px_rgb(0_0_0/0.3)] backdrop-blur-xl active:cursor-grabbing"
+      className="group flex h-[24px] w-[152px] cursor-grab sm:h-[30px] sm:w-[176px] touch-none select-none items-center rounded-full bg-surface/80 px-3.5 shadow-[0_0_0_0.5px_rgb(0_0_0/0.1),0_6px_18px_-8px_rgb(0_0_0/0.3)] backdrop-blur-xl active:cursor-grabbing"
     >
       <div ref={trackRef} className="relative h-full w-full">
         {/* Rail */}
@@ -84,7 +84,7 @@ export function ViewControl({ value, onChange }: { value: number; onChange: (v: 
         {/* Knob */}
         <span
           aria-hidden
-          className={`absolute top-1/2 size-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_0.5px_rgb(0_0_0/0.12),0_2px_6px_rgb(0_0_0/0.25)] group-focus-visible:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--accent)_55%,transparent)] ${
+          className={`absolute top-1/2 size-[15px] -translate-x-1/2 sm:size-[18px] -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_0.5px_rgb(0_0_0/0.12),0_2px_6px_rgb(0_0_0/0.25)] group-focus-visible:shadow-[0_0_0_3.5px_color-mix(in_srgb,var(--accent)_55%,transparent)] ${
             dragging ? "" : "transition-[left] duration-500 ease-(--ease-mac)"
           }`}
           style={{ left: position(value) }}

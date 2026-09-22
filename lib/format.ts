@@ -24,8 +24,33 @@ export function formatAspect(w: number, h: number) {
   return `${w / d}:${h / d}`;
 }
 
+/**
+ * Badge from the pixels recorded at upload. These names refer to the long edge, whatever the
+ * aspect ratio. A badge only appears once the image meets 4K; a larger master reads 5K or 8K.
+ */
+export function resolutionLabel(w: number, h: number) {
+  const width = Math.max(w, h);
+  if (width >= 7680) return "8K";
+  if (width >= 5120) return "5K";
+  if (width >= 3840) return "4K";
+  return null;
+}
+
+// Older titles ended in the resolution word. It now lives on the badge and in the search title.
+const TRAILING_RESOLUTION = /\s+(?:2K|4K|5K|8K)$/i;
+
+/** Name as shown on the page. */
+export function displayTitle(title: string) {
+  return title.replace(TRAILING_RESOLUTION, "");
+}
+
+/** Page title for search results: "Samurai by a Maple Waterfall 4K Wallpaper". */
+export const searchTitle = (t: { title: string; width: number; height: number }) =>
+  [displayTitle(t.title), resolutionLabel(t.width, t.height), "Wallpaper"].filter(Boolean).join(" ");
+
 export const MAX_DESCRIPTION = 300;
 
 /** The written description, or a plain factual line when there isn't one yet. */
 export const describeWallpaper = (w: { title: string; width: number; height: number; description: string | null }) =>
-  w.description ?? `${w.title}, an original ${formatResolution(w.width, w.height)} desktop wallpaper.`;
+  w.description ??
+  `${displayTitle(w.title)}, an original ${[resolutionLabel(w.width, w.height), "desktop wallpaper"].filter(Boolean).join(" ")} at ${formatResolution(w.width, w.height)}. Free to download from Wallpeace.`;

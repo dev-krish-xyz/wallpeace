@@ -3,7 +3,7 @@ import { CollectionCard } from "@/components/gallery/CollectionCard";
 import { EmptyLibrary } from "@/components/gallery/EmptyLibrary";
 import { PageBody, PageHeader } from "@/components/site/Section";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { COLLECTIONS } from "@/lib/collections";
+import { getCollections } from "@/lib/collections";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getWallpapers, inCollection } from "@/lib/wallpapers";
 
@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 };
 
 export default async function CollectionsPage() {
-  const all = await getWallpapers();
+  const [all, categories] = await Promise.all([getWallpapers(), getCollections()]);
   // Only collections with something in them; the rest appear as soon as a wallpaper is tagged.
-  const collections = COLLECTIONS.map((c) => ({ c, items: inCollection(all, c.slug) })).filter((x) => x.items.length);
+  const collections = categories.map((c) => ({ c, items: inCollection(all, c.slug) })).filter((x) => x.items.length);
   // Newest wallpaper not already covering another collection, so the covers don't repeat.
   const used = new Set<string>();
   const covers = collections.map(({ items }) => {

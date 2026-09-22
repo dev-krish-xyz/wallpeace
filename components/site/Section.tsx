@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Reveal } from "./Reveal";
 
 /** A titled block of a page, with an optional "See All"-style link on the right. */
 export function Section({
@@ -16,7 +17,7 @@ export function Section({
 }) {
   return (
     <section>
-      <div className="mb-5 flex items-end justify-between gap-4">
+      <Reveal className="mb-5 flex items-end justify-between gap-4">
         <div className="min-w-0">
           {eyebrow && <p className="mb-0.5 text-[12px] font-semibold text-accent">{eyebrow}</p>}
           <h2 className="font-display text-[22px] font-semibold tracking-[-0.015em] text-label">{title}</h2>
@@ -27,7 +28,7 @@ export function Section({
             {action.label}
           </Link>
         )}
-      </div>
+      </Reveal>
       {children}
     </section>
   );
@@ -57,7 +58,7 @@ export function PageBody({
   className?: string;
 }) {
   return (
-    <main className={`mx-auto w-full ${narrow ? "max-w-[720px]" : "max-w-[1200px]"} px-5 py-10 lg:px-10 lg:py-14 ${className}`}>
+    <main className={`mx-auto w-full ${narrow ? "max-w-[720px]" : "max-w-[1440px]"} px-5 py-10 lg:px-8 lg:py-14 ${className}`}>
       {children}
     </main>
   );

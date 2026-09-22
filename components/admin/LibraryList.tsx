@@ -7,12 +7,12 @@ import { useRouter } from "next/navigation";
 import { deleteWallpaper, renameWallpaper, setCollections, setDescription, setFeatured } from "@/app/admin/actions";
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
-import { COLLECTIONS } from "@/lib/collections";
+import type { Collection } from "@/lib/collections";
 import { MAX_DESCRIPTION, formatDate, formatResolution } from "@/lib/format";
 import { displayUrl } from "@/lib/storage";
 import type { Wallpaper } from "@/types/database";
 
-export function LibraryList({ wallpapers }: { wallpapers: Wallpaper[] }) {
+export function LibraryList({ wallpapers, categories }: { wallpapers: Wallpaper[]; categories: Collection[] }) {
   if (wallpapers.length === 0) {
     return <p className="rounded-[10px] bg-grouped px-4 py-10 text-center text-[13px] text-label-2">Nothing published yet.</p>;
   }
@@ -20,14 +20,14 @@ export function LibraryList({ wallpapers }: { wallpapers: Wallpaper[] }) {
     <div className="overflow-hidden rounded-[10px] bg-grouped ring-[0.5px] ring-separator">
       <ul className="divide-y divide-separator">
         {wallpapers.map((w) => (
-          <LibraryRow key={w.id} wallpaper={w} />
+          <LibraryRow key={w.id} wallpaper={w} categories={categories} />
         ))}
       </ul>
     </div>
   );
 }
 
-function LibraryRow({ wallpaper: w }: { wallpaper: Wallpaper }) {
+function LibraryRow({ wallpaper: w, categories }: { wallpaper: Wallpaper; categories: Collection[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [featured, setOptimisticFeatured] = useOptimistic(w.featured);
@@ -75,8 +75,8 @@ function LibraryRow({ wallpaper: w }: { wallpaper: Wallpaper }) {
           }
           className="mt-1 block w-full resize-none rounded-[6px] bg-transparent px-1.5 py-1 text-[12px] leading-snug text-label-2 outline-none placeholder:text-label-3 hover:bg-fill focus:bg-surface focus:ring-[3px] focus:ring-accent/45"
         />
-        <div role="group" aria-label="Collections" className="mt-1.5 flex flex-wrap gap-1 px-1">
-          {COLLECTIONS.map((c) => {
+        <div role="group" aria-label="Categories" className="mt-1.5 flex flex-wrap gap-1 px-1">
+          {categories.map((c) => {
             const on = collections.includes(c.slug);
             return (
               <button

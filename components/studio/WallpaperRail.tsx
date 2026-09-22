@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "@/components/ui/icons";
+import { displayTitle } from "@/lib/format";
 import { displayUrl } from "@/lib/storage";
 import type { Wallpaper } from "@/types/database";
 import { armTicks, tick } from "./tick";
@@ -34,8 +35,15 @@ const WHEEL_IDLE_MS = 180;
 const REACCELERATION = 1.6;
 // Drag distance (px) before a press becomes a drag instead of a click.
 const DRAG_SLOP = 6;
-// How far a flick carries (ms of velocity projected forward).
+// How far a flick carries (ms of velocity projected forward) when it isn't thrown hard enough to glide.
 const FLICK_MS = 140;
+// Touch fling: a hard swipe keeps travelling and slows down, instead of stopping at the next card.
+// Velocity comes from the last FLING_SAMPLE_MS of the gesture, in cards per second.
+const FLING_SAMPLE_MS = 90;
+const FLING_MIN_SPEED = 1.6; // below this a release just settles on the nearest card
+const FLING_FRICTION = 3.6; // e-folds per second; higher stops sooner
+const FLING_STOP_SPEED = 0.7; // hand back to the snap easing below this
+const FLING_MAX_SPEED = 26;
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 const DESKTOP = "(min-width: 1024px)";
@@ -73,6 +81,7 @@ export function WallpaperRail({
   const drag = useRef<{ id: number; start: number; startPos: number; moved: boolean; samples: { t: number; v: number }[] } | null>(null);
   const suppressClick = useRef(false);
   const wheel = useRef({ acc: 0, lastEvent: 0, lastAbs: 0, locked: false });
+  const fling = useRef(0); // cards per second while a swipe is still gliding, 0 when it isn't
 
   // Latest props for event handlers without re-subscribing.
   const latest = useRef({ wallpapers, onSelect, onPreload, selectedIndex });
@@ -141,7 +150,26 @@ export function WallpaperRail({
     const frame = (now: number) => {
       const dt = Math.min((now - lastTime.current) / 1000, 1 / 20);
       lastTime.current = now;
-      if (!drag.current?.moved) {
+      if (drag.current?.moved) {
+        // The finger is driving; position was set in onPointerMove.
+      } else if (fling.current) {
+        // Coasting after a swipe: keep travelling, slow down, snap when it runs out.
+        position.current += fling.current * dt;
+        fling.current *= Math.exp(-dt * FLING_FRICTION);
+        const hitEnd = position.current <= 0 || position.current >= count - 1;
+        if (hitEnd || Math.abs(fling.current) < FLING_STOP_SPEED) {
+          fling.current = 0;
+          goToRef.current(Math.round(clamp(position.current, 0, count - 1)));
+        } else {
+          // Selection follows the card passing the center, so the rest of the page keeps up.
+          const centered = clamp(Math.round(position.current), 0, count - 1);
+          if (centered !== target.current) {
+            target.current = centered;
+            const l = latest.current;
+            if (centered !== l.selectedIndex) l.onSelect(l.wallpapers[centered]);
+          }
+        }
+      } else {
         const diff = target.current - position.current;
         position.current = Math.abs(diff) < 0.0008 ? target.current : position.current + diff * (1 - Math.exp(-dt * EASE_RATE));
       }
@@ -149,6 +177,7 @@ export function WallpaperRail({
       // then relaxes to flat.
       const engaged =
         drag.current?.moved ||
+        fling.current !== 0 ||
         performance.now() - wheel.current.lastEvent < ORB_HOLD_MS ||
         Math.abs(target.current - position.current) > 0.02;
       const goal = engaged ? 1 : 0;
@@ -162,7 +191,7 @@ export function WallpaperRail({
         lockedIndex.current = target.current;
         setRestingIndex(target.current);
       }
-      if (drag.current?.moved || position.current !== target.current || orbLevel.current > 0)
+      if (drag.current?.moved || fling.current !== 0 || position.current !== target.current || orbLevel.current > 0)
         raf.current = requestAnimationFrame(frame);
       else {
         raf.current = 0;
@@ -170,7 +199,10 @@ export function WallpaperRail({
       }
     };
     raf.current = requestAnimationFrame(frame);
-  }, [paint]);
+  }, [paint, count]);
+
+  // `run`'s loop needs goTo, which needs run; this breaks the cycle.
+  const goToRef = useRef<(i: number) => void>(() => {});
 
   /** Moves to card `i` and makes it the selection. */
   const goTo = useCallback(
@@ -184,6 +216,7 @@ export function WallpaperRail({
     },
     [run],
   );
+  goToRef.current = goTo;
 
   // Selection changed elsewhere (keyboard, first load): head there.
   useLayoutEffect(() => {
@@ -248,6 +281,8 @@ export function WallpaperRail({
   const pointerAxis = (e: React.PointerEvent) => (isVertical() ? e.clientY : e.clientX);
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
+    fling.current = 0; // touching the rail catches it, like a spinning wheel
+    target.current = clamp(Math.round(position.current), 0, count - 1);
     drag.current = { id: e.pointerId, start: pointerAxis(e), startPos: position.current, moved: false, samples: [] };
   };
   const onPointerMove = (e: React.PointerEvent) => {
@@ -258,7 +293,11 @@ export function WallpaperRail({
     if (!d.moved) {
       if (Math.abs(delta) < DRAG_SLOP) return;
       d.moved = true;
-      e.currentTarget.setPointerCapture(e.pointerId);
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        // Pointer already gone; the drag still works through the element's own events.
+      }
     }
     const pitch = (isVertical() ? first.offsetHeight : first.offsetWidth) + GAP;
     // Rubber-band past the ends.
@@ -267,7 +306,7 @@ export function WallpaperRail({
     if (next > count - 1) next = count - 1 + (next - (count - 1)) * 0.35;
     position.current = next;
     d.samples.push({ t: performance.now(), v: next });
-    if (d.samples.length > 6) d.samples.shift();
+    if (d.samples.length > 8) d.samples.shift();
     run();
   };
   const onPointerUp = (e: React.PointerEvent) => {
@@ -275,8 +314,17 @@ export function WallpaperRail({
     drag.current = null;
     if (!d || d.id !== e.pointerId || !d.moved) return;
     suppressClick.current = true;
-    const [a, b] = [d.samples[0], d.samples[d.samples.length - 1]];
-    const velocity = a && b && b.t > a.t ? (b.v - a.v) / (b.t - a.t) : 0; // cards per ms
+    // Only the tail of the gesture decides the throw, so a slow finish stops where you left it.
+    const last = d.samples[d.samples.length - 1];
+    const first = d.samples.find((s) => last.t - s.t <= FLING_SAMPLE_MS) ?? d.samples[0];
+    const velocity = last.t > first.t ? (last.v - first.v) / (last.t - first.t) : 0; // cards per ms
+    const speed = velocity * 1000; // cards per second
+    const inBounds = position.current > 0 && position.current < count - 1;
+    if (e.pointerType !== "mouse" && inBounds && Math.abs(speed) >= FLING_MIN_SPEED) {
+      fling.current = clamp(speed, -FLING_MAX_SPEED, FLING_MAX_SPEED);
+      run();
+      return;
+    }
     let next = Math.round(position.current + velocity * FLICK_MS);
     const start = Math.round(d.startPos);
     // Any deliberate drag moves at least one card.
@@ -326,7 +374,7 @@ export function WallpaperRail({
             type="button"
             role="option"
             aria-selected={active}
-            aria-label={w.title}
+            aria-label={displayTitle(w.title)}
             tabIndex={active ? 0 : -1}
             onClick={() => (active ? undefined : goTo(i))}
             onPointerEnter={() => onPreload(w)}
@@ -341,7 +389,7 @@ export function WallpaperRail({
           >
             <Image
               src={displayUrl(w)}
-              alt={`${w.title} desktop wallpaper`}
+              alt={`${displayTitle(w.title)} desktop wallpaper`}
               fill
               sizes="(min-width: 1024px) 460px, 64vw"
               loading={Math.abs(i - restingIndex) < 3 ? "eager" : "lazy"}

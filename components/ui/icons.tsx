@@ -75,3 +75,9 @@ export const StarFill = (p: IconProps) => (
     <path d="m10 2.8 2.2 4.5 5 .7-3.6 3.5.85 4.95L10 14.1l-4.45 2.35.85-4.95L2.8 8l5-.7z" />
   </svg>
 );
+
+export const Menu = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M3.5 6h13M3.5 10h13M3.5 14h13" />
+  </svg>
+);

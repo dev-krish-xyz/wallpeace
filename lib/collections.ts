@@ -1,18 +1,30 @@
-// The fixed set of collections. Slugs must match the check constraint in
-// supabase/migrations/0003_collections_downloads.sql.
-export const COLLECTIONS = [
-  { slug: "minimal", name: "Minimal", blurb: "Quiet compositions with room to breathe around your icons." },
-  { slug: "dark", name: "Dark", blurb: "Low-light scenes that stay easy on the eyes after sunset." },
-  { slug: "nature", name: "Nature", blurb: "Coastlines, forests, fields and skies." },
-  { slug: "anime-illustration", name: "Anime & Illustration", blurb: "Illustrated worlds, full of small details." },
-  { slug: "abstract", name: "Abstract", blurb: "Color, shape and texture on their own." },
-  { slug: "architecture", name: "Architecture", blurb: "Temples, streets and towns worth wandering." },
-  { slug: "space", name: "Space", blurb: "Planets, stars and the dark between them." },
-] as const;
+import "server-only";
+import { unstable_cache } from "next/cache";
+import { CATEGORIES_TAG, isSupabaseConfigured } from "@/lib/env";
+import { createSupabasePublic } from "@/lib/supabase/server";
 
-export type CollectionSlug = (typeof COLLECTIONS)[number]["slug"];
-export type Collection = (typeof COLLECTIONS)[number];
+export type Collection = { slug: string; name: string; blurb: string | null };
 
-export const COLLECTION_SLUGS = COLLECTIONS.map((c) => c.slug) as CollectionSlug[];
+export const CATEGORY_COLUMNS = "slug,name,blurb,position";
+export const MAX_CATEGORY_NAME = 60;
+export const MAX_CATEGORY_BLURB = 200;
 
-export const getCollection = (slug: string) => COLLECTIONS.find((c) => c.slug === slug) ?? null;
+/** Every category, in the order they were given. Managed in admin, so it comes from the database. */
+export const getCollections = unstable_cache(
+  async (): Promise<Collection[]> => {
+    if (!isSupabaseConfigured) return [];
+    const { data, error } = await createSupabasePublic()
+      .from("categories")
+      .select(CATEGORY_COLUMNS)
+      .order("position")
+      .order("name");
+    if (error) throw new Error(`Failed to load categories: ${error.message}`);
+    return data.map(({ slug, name, blurb }) => ({ slug, name, blurb }));
+  },
+  ["categories:all"],
+  { tags: [CATEGORIES_TAG], revalidate: 300 },
+);
+
+export async function getCollection(slug: string) {
+  return (await getCollections()).find((c) => c.slug === slug) ?? null;
+}
