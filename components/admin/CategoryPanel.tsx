@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createCategory, deleteCategory, updateCategory } from "@/app/admin/actions";
 import { Button } from "@/components/ui/Button";
 import { Plus } from "@/components/ui/icons";
-import { MAX_CATEGORY_BLURB, MAX_CATEGORY_NAME, type Collection } from "@/lib/collections";
+import { MAX_CATEGORY_BLURB, MAX_CATEGORY_NAME, type Collection } from "@/lib/category";
 
 /** Add, rename and remove the categories wallpapers can be filed under. */
 export function CategoryPanel({ categories, counts }: { categories: Collection[]; counts: Record<string, number> }) {

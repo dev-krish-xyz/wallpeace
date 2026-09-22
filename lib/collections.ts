@@ -1,13 +1,11 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
+import { CATEGORY_COLUMNS, type Collection } from "@/lib/category";
 import { CATEGORIES_TAG, isSupabaseConfigured } from "@/lib/env";
 import { createSupabasePublic } from "@/lib/supabase/server";
 
-export type Collection = { slug: string; name: string; blurb: string | null };
-
-export const CATEGORY_COLUMNS = "slug,name,blurb,position";
-export const MAX_CATEGORY_NAME = 60;
-export const MAX_CATEGORY_BLURB = 200;
+export type { Collection } from "@/lib/category";
+export { CATEGORY_COLUMNS, MAX_CATEGORY_BLURB, MAX_CATEGORY_NAME } from "@/lib/category";
 
 /** Every category, in the order they were given. Managed in admin, so it comes from the database. */
 export const getCollections = unstable_cache(

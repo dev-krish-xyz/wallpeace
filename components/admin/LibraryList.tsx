@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { deleteWallpaper, renameWallpaper, setCollections, setDescription, setFeatured } from "@/app/admin/actions";
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
-import type { Collection } from "@/lib/collections";
+import type { Collection } from "@/lib/category";
 import { MAX_DESCRIPTION, formatDate, formatResolution } from "@/lib/format";
 import { displayUrl } from "@/lib/storage";
 import type { Wallpaper } from "@/types/database";

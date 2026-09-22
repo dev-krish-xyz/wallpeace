@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { HOVER_ZOOM } from "./WallpaperCard";
-import type { Collection } from "@/lib/collections";
+import type { Collection } from "@/lib/category";
 import { displayUrl } from "@/lib/storage";
 import type { Wallpaper } from "@/types/database";
 
