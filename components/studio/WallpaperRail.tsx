@@ -308,6 +308,8 @@ export function WallpaperRail({
       className={[
         "relative size-full touch-none select-none overflow-hidden",
         "[perspective:600px] lg:[perspective:650px]",
+        // Where the locked card sits: a little above center on the vertical (desktop) rail.
+        "[--center-y:50%] lg:[--center-y:45%] [perspective-origin:50%_var(--center-y)]",
         "[--item-w:64vw] sm:[--item-w:40vw] lg:[--item-w:min(28vw,460px)]",
         "[mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]",
         "lg:[mask-image:linear-gradient(to_bottom,transparent,black_14%,black_86%,transparent)]",
@@ -328,7 +330,7 @@ export function WallpaperRail({
             tabIndex={active ? 0 : -1}
             onClick={() => (active ? undefined : goTo(i))}
             onPointerEnter={() => onPreload(w)}
-            className="absolute top-1/2 left-1/2 aspect-[16/10] w-(--item-w) overflow-hidden rounded-[14px] bg-fill outline-offset-4 transition-[box-shadow,filter] duration-200 ease-(--ease-mac) [backface-visibility:hidden] will-change-transform"
+            className="absolute top-(--center-y) left-1/2 aspect-[16/10] w-(--item-w) overflow-hidden rounded-[14px] bg-fill outline-offset-4 transition-[box-shadow,filter] duration-200 ease-(--ease-mac) [backface-visibility:hidden] will-change-transform"
             style={{
               filter: `blur(${BLUR_BY_DISTANCE[Math.min(Math.abs(i - restingIndex), BLUR_BY_DISTANCE.length - 1)]}px)`,
               boxShadow: i === restingIndex
@@ -356,7 +358,7 @@ export function WallpaperRail({
 
       {/* Step controls: stacked ↑/↓ beside the active card on desktop, ←/→ at the edges on mobile. */}
       <div className="pointer-events-none absolute inset-0 z-[200] flex items-center justify-between px-2 lg:block lg:p-0">
-        <div className="contents lg:absolute lg:top-1/2 lg:left-[calc(50%+var(--item-w)/2+18px)] lg:flex lg:-translate-y-1/2 lg:flex-col lg:gap-2">
+        <div className="contents lg:absolute lg:top-(--center-y) lg:left-[calc(50%+var(--item-w)/2+18px)] lg:flex lg:-translate-y-1/2 lg:flex-col lg:gap-2">
           <button
             type="button"
             aria-label="Previous wallpaper"

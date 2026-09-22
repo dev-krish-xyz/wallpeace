@@ -11,7 +11,8 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const wallpapers = await getWallpapers();
-  const initial = wallpapers.find((w) => w.featured) ?? wallpapers[0];
+  // Open on the middle of the list so there's something to scroll to in both directions.
+  const initial = wallpapers[Math.floor(wallpapers.length / 2)];
 
   return (
     <>
