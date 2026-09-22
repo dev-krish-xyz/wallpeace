@@ -57,3 +57,21 @@ export const XMark = (p: IconProps) => (
     <path d="m5.5 5.5 9 9m0-9-9 9" />
   </svg>
 );
+
+export const Expand = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M11.5 3.5h5v5M8.5 16.5h-5v-5M16.5 3.5 11 9M3.5 16.5 9 11" />
+  </svg>
+);
+
+export const Collapse = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M11 4v5h5M9 16v-5H4M11 9l5.5-5.5M9 11l-5.5 5.5" />
+  </svg>
+);
+
+export const StarFill = (p: IconProps) => (
+  <svg {...base({ fill: "currentColor", strokeWidth: 1.25, ...p })}>
+    <path d="m10 2.8 2.2 4.5 5 .7-3.6 3.5.85 4.95L10 14.1l-4.45 2.35.85-4.95L2.8 8l5-.7z" />
+  </svg>
+);

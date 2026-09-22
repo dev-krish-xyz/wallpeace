@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { deleteWallpaper, renameWallpaper, setDescription, setFeatured } from "@/app/admin/actions";
+import { deleteWallpaper, renameWallpaper, setCollections, setDescription, setFeatured } from "@/app/admin/actions";
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
+import { COLLECTIONS } from "@/lib/collections";
 import { MAX_DESCRIPTION, formatDate, formatResolution } from "@/lib/format";
 import { displayUrl } from "@/lib/storage";
 import type { Wallpaper } from "@/types/database";
@@ -30,6 +31,7 @@ function LibraryRow({ wallpaper: w }: { wallpaper: Wallpaper }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [featured, setOptimisticFeatured] = useOptimistic(w.featured);
+  const [collections, setOptimisticCollections] = useOptimistic(w.collections);
   const [title, setTitle] = useState(w.title);
   const [description, updateDescription] = useState(w.description ?? "");
   const [confirming, setConfirming] = useState(false);
@@ -73,6 +75,30 @@ function LibraryRow({ wallpaper: w }: { wallpaper: Wallpaper }) {
           }
           className="mt-1 block w-full resize-none rounded-[6px] bg-transparent px-1.5 py-1 text-[12px] leading-snug text-label-2 outline-none placeholder:text-label-3 hover:bg-fill focus:bg-surface focus:ring-[3px] focus:ring-accent/45"
         />
+        <div role="group" aria-label="Collections" className="mt-1.5 flex flex-wrap gap-1 px-1">
+          {COLLECTIONS.map((c) => {
+            const on = collections.includes(c.slug);
+            return (
+              <button
+                key={c.slug}
+                type="button"
+                aria-pressed={on}
+                onClick={() =>
+                  run(async () => {
+                    const next = on ? collections.filter((s) => s !== c.slug) : [...collections, c.slug];
+                    setOptimisticCollections(next);
+                    return setCollections(w.id, next);
+                  })
+                }
+                className={`h-[22px] rounded-full px-2.5 text-[11px] font-medium transition-colors duration-150 ${
+                  on ? "bg-accent text-white" : "bg-fill-2 text-label-2 hover:text-label"
+                }`}
+              >
+                {c.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
       <label className="hidden items-center gap-2 text-[12px] text-label-2 sm:flex">
         Featured

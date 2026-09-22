@@ -13,6 +13,8 @@ export type Database = {
           height: number;
           featured: boolean;
           description: string | null;
+          collections: string[];
+          downloads: number;
           blur_data_url: string | null;
           created_at: string;
         };
@@ -25,6 +27,8 @@ export type Database = {
           height: number;
           featured?: boolean;
           description?: string | null;
+          collections?: string[];
+          downloads?: number;
           blur_data_url?: string | null;
           created_at?: string;
         };
@@ -41,6 +45,7 @@ export type Database = {
     Views: { [_ in never]: never };
     Functions: {
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      count_download: { Args: { p_slug: string }; Returns: undefined };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };

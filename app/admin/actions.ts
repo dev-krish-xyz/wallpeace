@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { BUCKET, WALLPAPERS_TAG } from "@/lib/env";
+import { COLLECTION_SLUGS } from "@/lib/collections";
 import { MAX_DESCRIPTION } from "@/lib/format";
 import { slugify } from "@/lib/slug";
 import { publicUrl, storagePaths } from "@/lib/storage";
@@ -26,6 +27,7 @@ const fail = (e: unknown): { ok: false; error: string } => ({
 });
 
 function refresh(slug?: string) {
+  // Every public page reads the tagged wallpaper list, so the tag refreshes them all.
   revalidateTag(WALLPAPERS_TAG);
   revalidatePath("/");
   if (slug) revalidatePath(`/w/${slug}`);
@@ -155,6 +157,27 @@ export async function setDescription(id: string, description: string): Promise<R
     const { data, error } = await supabase
       .from("wallpapers")
       .update({ description: parsed.data })
+      .eq("id", id)
+      .select("slug")
+      .single();
+    if (error) throw error;
+    refresh(data.slug);
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+const collectionsSchema = z.array(z.enum(COLLECTION_SLUGS as [string, ...string[]])).transform((c) => [...new Set(c)]);
+
+export async function setCollections(id: string, collections: string[]): Promise<Result> {
+  try {
+    const parsed = collectionsSchema.safeParse(collections);
+    if (!parsed.success) return { ok: false, error: "Unknown collection." };
+    const { supabase } = await requireAdmin();
+    const { data, error } = await supabase
+      .from("wallpapers")
+      .update({ collections: parsed.data })
       .eq("id", id)
       .select("slug")
       .single();

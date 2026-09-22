@@ -14,6 +14,7 @@
   --fill-2: rgb(0 0 0 / 0.08);
   --accent: #007aff;
   --danger: #ff3b30;
+  --premium: #ff9f0a;
   --toolbar: rgb(255 255 255 / 0.74);
   --shadow-card: 0 0 0 0.5px rgb(0 0 0 / 0.1), 0 1px 2px rgb(0 0 0 / 0.06), 0 6px 20px -8px rgb(0 0 0 / 0.14);
   --shadow-card-hover: 0 0 0 0.5px rgb(0 0 0 / 0.12), 0 2px 4px rgb(0 0 0 / 0.06), 0 18px 40px -14px rgb(0 0 0 / 0.28);
@@ -32,6 +33,7 @@
   --color-fill-2: var(--fill-2);
   --color-accent: var(--accent);
   --color-danger: var(--danger);
+  --color-premium: var(--premium);
   --color-toolbar: var(--toolbar);
   --shadow-card: var(--shadow-card);
   --shadow-card-hover: var(--shadow-card-hover);

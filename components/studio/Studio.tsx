@@ -167,7 +167,8 @@ export function Studio({
               <p className="mt-1.5 line-clamp-2 max-w-[60ch] text-[13px] leading-snug text-label-2">{selected.description}</p>
             )}
           </div>
-          <div className="flex shrink-0 items-center gap-3">
+          {/* Equal columns: the finish picker and Download read as one matched pair. */}
+          <div className="grid shrink-0 grid-cols-2 items-center gap-3 self-start sm:self-auto">
             <Segmented
               label="MacBook finish"
               value={finish}

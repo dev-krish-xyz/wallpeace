@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Brand, Toolbar } from "@/components/ui/Toolbar";
+import { WallpaperGrid } from "@/components/gallery/WallpaperCard";
+import { PageBody, Section } from "@/components/site/Section";
+import { SiteHeader } from "@/components/site/SiteHeader";
 import { Studio } from "@/components/studio/Studio";
 import { describeWallpaper } from "@/lib/format";
 import { SITE_URL } from "@/lib/env";
 import { displayUrl } from "@/lib/storage";
-import { getWallpaperBySlug, getWallpapers } from "@/lib/wallpapers";
+import { getWallpaperBySlug, getWallpapers, relatedTo } from "@/lib/wallpapers";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -60,8 +62,15 @@ export default async function WallpaperPage({ params }: Props) {
         // Escape "<" so a title can never close the script tag.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <Toolbar left={<Brand />} />
+      <SiteHeader />
       <Studio wallpapers={wallpapers} initialId={wallpaper.id} />
+      <div className="border-t border-separator">
+        <PageBody>
+          <Section title="More Wallpapers" action={{ href: "/browse", label: "Browse All" }}>
+            <WallpaperGrid wallpapers={relatedTo(wallpaper, wallpapers, 6)} />
+          </Section>
+        </PageBody>
+      </div>
     </>
   );
 }
