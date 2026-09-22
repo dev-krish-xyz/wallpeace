@@ -18,7 +18,8 @@ export const getWallpapers = unstable_cache(
     return data;
   },
   ["wallpapers:all"],
-  { tags: [WALLPAPERS_TAG] },
+  // Tags give instant refresh on publish; the timer catches edits made outside this deployment.
+  { tags: [WALLPAPERS_TAG], revalidate: 300 },
 );
 
 export async function getWallpaperWithNeighbors(slug: string) {

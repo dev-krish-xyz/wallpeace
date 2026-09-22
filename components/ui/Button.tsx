@@ -11,6 +11,8 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes = {
+  // Matches the Segmented control's height and type.
+  xs: "h-[26px] px-3 text-[12px] rounded-[8px]",
   sm: "h-7 px-3 text-[13px] rounded-[7px]",
   md: "h-9 px-4 text-[14px] rounded-[9px]",
   lg: "h-11 px-5 text-[15px] rounded-[11px]",

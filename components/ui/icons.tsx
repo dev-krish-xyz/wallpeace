@@ -57,3 +57,10 @@ export const XMark = (p: IconProps) => (
     <path d="m5.5 5.5 9 9m0-9-9 9" />
   </svg>
 );
+
+export const Info = (p: IconProps) => (
+  <svg {...base(p)}>
+    <circle cx="10" cy="10" r="7.25" />
+    <path d="M10 9v4.5M10 6.6v.1" />
+  </svg>
+);

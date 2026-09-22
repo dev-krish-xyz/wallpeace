@@ -14,8 +14,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className="min-h-dvh">{children}</body>
+    // Browser extensions (Grammarly, Dark Reader, password managers) inject attributes on <html>
+    // and <body> before hydration; this ignores attribute diffs on these two elements only.
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-dvh" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

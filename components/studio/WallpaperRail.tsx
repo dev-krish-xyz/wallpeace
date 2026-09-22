@@ -1,0 +1,345 @@
+"use client";
+
+import Image from "next/image";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "@/components/ui/icons";
+import { displayUrl } from "@/lib/storage";
+import type { Wallpaper } from "@/types/database";
+
+// ─── Drum geometry ───────────────────────────────────────────────────────────
+// Angle between neighbors on the drum. Smaller = bigger ring, flatter curve.
+const STEP = (34 * Math.PI) / 180;
+const MAX_ANGLE = Math.PI / 2;
+// Cards tilt less than the drum surface would (1 = fully tangent), so neighbors stay readable.
+const TILT_FACTOR = 0.42;
+// Extra push into the distance beyond the drum's own curve.
+const DEPTH_BOOST = 1.25;
+// Spreads neighbors along the ring so perspective doesn't tuck them behind the active card.
+const SPREAD = 1.14;
+const GAP = 16;
+// Depth-of-field blur by distance from the selected card, eased by CSS when the selection changes.
+const BLUR_BY_DISTANCE = [0, 1.75, 3.5];
+
+// ─── Motion ──────────────────────────────────────────────────────────────────
+// How quickly the ring eases toward its target (higher = snappier).
+const EASE_RATE = 11;
+// Wheel travel (px) that counts as one step. After a step the wheel locks until the gesture
+// (including trackpad momentum) goes quiet, or a new swipe starts while momentum is decaying.
+const WHEEL_STEP = 40;
+const WHEEL_IDLE_MS = 180;
+const REACCELERATION = 1.6;
+// Drag distance (px) before a press becomes a drag instead of a click.
+const DRAG_SLOP = 6;
+// How far a flick carries (ms of velocity projected forward).
+const FLICK_MS = 140;
+
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+const DESKTOP = "(min-width: 1024px)";
+
+/**
+ * Drum carousel driven by a single `position` (in cards), not by native scrolling: the centered
+ * card is active; neighbors wrap around a ring, tilting back and dimming with distance. Wheel and
+ * arrows step one card at a time; drag follows the pointer and settles on the nearest card.
+ * Vertical in the desktop sidebar, horizontal on small screens.
+ */
+export function WallpaperRail({
+  wallpapers,
+  selectedId,
+  onSelect,
+  onPreload,
+}: {
+  wallpapers: Wallpaper[];
+  selectedId: string;
+  onSelect: (w: Wallpaper) => void;
+  onPreload: (w: Wallpaper) => void;
+}) {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const lastStyles = useRef<string[]>([]);
+  const selectedIndex = Math.max(0, wallpapers.findIndex((w) => w.id === selectedId));
+  const count = wallpapers.length;
+
+  // The card the ring has come to rest on. Blur and shadow follow this, not each step, so fast
+  // scrolling never restarts filter transitions mid-motion.
+  const [restingIndex, setRestingIndex] = useState(selectedIndex);
+  const position = useRef(selectedIndex); // what's drawn, fractional while moving
+  const target = useRef(selectedIndex); // where it's heading, always a whole card
+  const raf = useRef(0);
+  const lastTime = useRef(0);
+  const drag = useRef<{ id: number; start: number; startPos: number; moved: boolean; samples: { t: number; v: number }[] } | null>(null);
+  const suppressClick = useRef(false);
+  const wheel = useRef({ acc: 0, lastEvent: 0, lastAbs: 0, locked: false });
+
+  // Latest props for event handlers without re-subscribing.
+  const latest = useRef({ wallpapers, onSelect, onPreload, selectedIndex });
+  latest.current = { wallpapers, onSelect, onPreload, selectedIndex };
+
+  const isVertical = () => typeof window !== "undefined" && window.matchMedia(DESKTOP).matches;
+
+  /** Draws every card from `position`. Only transform/opacity change per frame. */
+  const paint = useCallback(() => {
+    const stage = stageRef.current;
+    const first = cardRefs.current.find(Boolean);
+    if (!stage || !first) return;
+    const vertical = isVertical();
+    const pitch = (vertical ? first.offsetHeight : first.offsetWidth) + GAP;
+    const radius = pitch / STEP;
+
+    cardRefs.current.forEach((card, i) => {
+      if (!card) return;
+      const s = i - position.current;
+      const angle = clamp(s * STEP, -MAX_ANGLE, MAX_ANGLE);
+      const along = (radius * Math.sin(angle) * SPREAD).toFixed(2);
+      const depth = (radius * (Math.cos(angle) - 1) * DEPTH_BOOST).toFixed(2);
+      const tilt = (-angle * TILT_FACTOR * 180) / Math.PI;
+      const facing = Math.cos(angle);
+      const transform = vertical
+        ? `translate(-50%,-50%) translate3d(0,${along}px,${depth}px) rotateX(${tilt.toFixed(2)}deg)`
+        : `translate(-50%,-50%) translate3d(${along}px,0,${depth}px) rotateY(${(-tilt).toFixed(2)}deg)`;
+      const opacity = Math.max(0, (facing - 0.1) / 0.9).toFixed(3);
+      const shade = ((1 - facing) * 0.55).toFixed(3);
+      const zIndex = String(100 - Math.round(Math.abs(s) * 4));
+      const hidden = Math.abs(s) > 2.6;
+
+      const key = `${transform}|${opacity}|${shade}|${zIndex}|${hidden}`;
+      if (lastStyles.current[i] === key) return;
+      lastStyles.current[i] = key;
+      card.style.transform = transform;
+      card.style.opacity = opacity;
+      card.style.zIndex = zIndex;
+      card.style.visibility = hidden ? "hidden" : "visible";
+      const overlay = card.lastElementChild as HTMLElement | null;
+      if (overlay) overlay.style.opacity = shade;
+    });
+  }, []);
+
+  /** One loop eases `position` to `target` and stops itself when settled. */
+  const run = useCallback(() => {
+    if (raf.current) return;
+    lastTime.current = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min((now - lastTime.current) / 1000, 1 / 20);
+      lastTime.current = now;
+      if (!drag.current?.moved) {
+        const diff = target.current - position.current;
+        position.current = Math.abs(diff) < 0.0008 ? target.current : position.current + diff * (1 - Math.exp(-dt * EASE_RATE));
+      }
+      paint();
+      if (drag.current?.moved || position.current !== target.current) raf.current = requestAnimationFrame(tick);
+      else {
+        raf.current = 0;
+        setRestingIndex(target.current);
+      }
+    };
+    raf.current = requestAnimationFrame(tick);
+  }, [paint]);
+
+  /** Moves to card `i` and makes it the selection. */
+  const goTo = useCallback(
+    (i: number) => {
+      const { wallpapers: list, onSelect: select, onPreload: preload, selectedIndex: current } = latest.current;
+      const next = clamp(Math.round(i), 0, list.length - 1);
+      target.current = next;
+      [list[next + 1], list[next - 1]].forEach((w) => w && preload(w));
+      if (next !== current) select(list[next]);
+      run();
+    },
+    [run],
+  );
+
+  // Selection changed elsewhere (keyboard, first load): head there.
+  useLayoutEffect(() => {
+    if (target.current !== selectedIndex) {
+      target.current = selectedIndex;
+      run();
+    }
+  }, [selectedIndex, run]);
+
+  useLayoutEffect(() => {
+    paint();
+    const mq = window.matchMedia(DESKTOP);
+    const repaint = () => {
+      lastStyles.current = [];
+      paint();
+    };
+    mq.addEventListener("change", repaint);
+    window.addEventListener("resize", repaint);
+    return () => {
+      mq.removeEventListener("change", repaint);
+      window.removeEventListener("resize", repaint);
+      cancelAnimationFrame(raf.current);
+      raf.current = 0;
+    };
+  }, [paint]);
+
+  // Wheel / trackpad: exactly one card per gesture.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const vertical = isVertical();
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1;
+      const primary = vertical ? e.deltaY : Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      const d = primary * unit;
+      const abs = Math.abs(d);
+      const w = wheel.current;
+      const now = performance.now();
+      const quiet = now - w.lastEvent > WHEEL_IDLE_MS;
+      // Momentum only decays; a sudden rise means the user started a new swipe.
+      const newSwipe = w.locked && abs > 8 && abs > w.lastAbs * REACCELERATION;
+      if (quiet || newSwipe) {
+        w.locked = false;
+        w.acc = 0;
+      }
+      w.lastEvent = now;
+      w.lastAbs = abs;
+      if (w.locked) return;
+      w.acc += d;
+      if (Math.abs(w.acc) >= WHEEL_STEP) {
+        goTo(target.current + Math.sign(w.acc));
+        w.acc = 0;
+        w.locked = true;
+      }
+    };
+    stage.addEventListener("wheel", onWheel, { passive: false });
+    return () => stage.removeEventListener("wheel", onWheel);
+  }, [goTo]);
+
+  // Drag (touch, pen or mouse): follow the pointer, then settle on one card.
+  const pointerAxis = (e: React.PointerEvent) => (isVertical() ? e.clientY : e.clientX);
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    drag.current = { id: e.pointerId, start: pointerAxis(e), startPos: position.current, moved: false, samples: [] };
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    const first = cardRefs.current.find(Boolean);
+    if (!d || d.id !== e.pointerId || !first) return;
+    const delta = pointerAxis(e) - d.start;
+    if (!d.moved) {
+      if (Math.abs(delta) < DRAG_SLOP) return;
+      d.moved = true;
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+    const pitch = (isVertical() ? first.offsetHeight : first.offsetWidth) + GAP;
+    // Rubber-band past the ends.
+    let next = d.startPos - delta / pitch;
+    if (next < 0) next *= 0.35;
+    if (next > count - 1) next = count - 1 + (next - (count - 1)) * 0.35;
+    position.current = next;
+    d.samples.push({ t: performance.now(), v: next });
+    if (d.samples.length > 6) d.samples.shift();
+    run();
+  };
+  const onPointerUp = (e: React.PointerEvent) => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d || d.id !== e.pointerId || !d.moved) return;
+    suppressClick.current = true;
+    const [a, b] = [d.samples[0], d.samples[d.samples.length - 1]];
+    const velocity = a && b && b.t > a.t ? (b.v - a.v) / (b.t - a.t) : 0; // cards per ms
+    let next = Math.round(position.current + velocity * FLICK_MS);
+    const start = Math.round(d.startPos);
+    // Any deliberate drag moves at least one card.
+    if (next === start && Math.abs(position.current - d.startPos) > 0.15) next = start + Math.sign(position.current - d.startPos);
+    goTo(next);
+  };
+
+  const atStart = selectedIndex === 0;
+  const atEnd = selectedIndex === count - 1;
+  const arrow =
+    "pointer-events-auto inline-flex size-8 items-center justify-center rounded-full bg-surface/85 text-label shadow-[0_0_0_0.5px_rgb(0_0_0/0.1),0_4px_12px_-4px_rgb(0_0_0/0.25)] backdrop-blur-xl transition-[opacity,transform,background-color] duration-200 hover:bg-surface active:scale-95 disabled:opacity-30 disabled:active:scale-100";
+
+  return (
+    <div
+      ref={stageRef}
+      role="listbox"
+      aria-label="Wallpapers"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onClickCapture={(e) => {
+        if (suppressClick.current) {
+          suppressClick.current = false;
+          e.stopPropagation();
+          e.preventDefault();
+        }
+      }}
+      className={[
+        "relative size-full touch-none select-none overflow-hidden",
+        "[perspective:700px] lg:[perspective:800px]",
+        "[--item-w:64vw] sm:[--item-w:40vw] lg:[--item-w:min(28vw,460px)]",
+        "[mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]",
+        "lg:[mask-image:linear-gradient(to_bottom,transparent,black_14%,black_86%,transparent)]",
+      ].join(" ")}
+    >
+      {wallpapers.map((w, i) => {
+        const active = i === selectedIndex;
+        return (
+          <button
+            key={w.id}
+            ref={(node) => {
+              cardRefs.current[i] = node;
+            }}
+            type="button"
+            role="option"
+            aria-selected={active}
+            aria-label={w.title}
+            tabIndex={active ? 0 : -1}
+            onClick={() => (active ? undefined : goTo(i))}
+            onPointerEnter={() => onPreload(w)}
+            className="absolute top-1/2 left-1/2 aspect-[16/10] w-(--item-w) overflow-hidden rounded-[14px] bg-fill outline-offset-4 transition-[box-shadow,filter] duration-[380ms] ease-(--ease-mac) [backface-visibility:hidden] will-change-transform"
+            style={{
+              filter: `blur(${BLUR_BY_DISTANCE[Math.min(Math.abs(i - restingIndex), BLUR_BY_DISTANCE.length - 1)]}px)`,
+              boxShadow: i === restingIndex
+                ? "0 0 0 0.5px rgb(0 0 0 / 0.1), 0 18px 40px -16px rgb(0 0 0 / 0.45)"
+                : "0 0 0 0.5px rgb(0 0 0 / 0.1), 0 4px 12px -6px rgb(0 0 0 / 0.2)",
+            }}
+          >
+            <Image
+              src={displayUrl(w)}
+              alt=""
+              fill
+              sizes="(min-width: 1024px) 460px, 64vw"
+              loading={Math.abs(i - restingIndex) < 3 ? "eager" : "lazy"}
+              placeholder={w.blur_data_url ? "blur" : "empty"}
+              blurDataURL={w.blur_data_url ?? undefined}
+              draggable={false}
+              className="pointer-events-none object-cover"
+            />
+            {/* Depth shading; opacity driven by paint(). Must stay the last child. */}
+            <span aria-hidden className="pointer-events-none absolute inset-0 bg-black opacity-0" />
+          </button>
+        );
+      })}
+
+      {/* Step controls: stacked ↑/↓ beside the active card on desktop, ←/→ at the edges on mobile. */}
+      <div className="pointer-events-none absolute inset-0 z-[200] flex items-center justify-between px-2 lg:block lg:p-0">
+        <div className="contents lg:absolute lg:top-1/2 lg:left-[calc(50%+var(--item-w)/2+18px)] lg:flex lg:-translate-y-1/2 lg:flex-col lg:gap-2">
+          <button
+            type="button"
+            aria-label="Previous wallpaper"
+            disabled={atStart}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => goTo(target.current - 1)}
+            className={arrow}
+          >
+            <ChevronLeft width={16} height={16} className="lg:rotate-90" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next wallpaper"
+            disabled={atEnd}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => goTo(target.current + 1)}
+            className={arrow}
+          >
+            <ChevronRight width={16} height={16} className="lg:rotate-90" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

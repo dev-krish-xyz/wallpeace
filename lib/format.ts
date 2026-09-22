@@ -1,5 +1,7 @@
+// Fixed time zone so the server (UTC on Vercel) and the visitor's browser render the same date;
+// otherwise the text differs near midnight and React reports a hydration mismatch.
 export const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 export const formatResolution = (w: number, h: number) => `${w} × ${h}`;
 

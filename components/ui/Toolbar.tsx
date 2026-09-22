@@ -31,31 +31,3 @@ export function Brand({ suffix }: { suffix?: string }) {
     </Link>
   );
 }
-
-/** Borderless toolbar button, the hover-to-reveal kind found in Finder and Photos. */
-export function ToolbarButton({
-  href,
-  label,
-  children,
-  disabled,
-}: {
-  href?: string | null;
-  label: string;
-  children: React.ReactNode;
-  disabled?: boolean;
-}) {
-  const cls =
-    "inline-flex h-7 min-w-7 items-center justify-center gap-1 rounded-md px-1.5 text-[13px] text-label-2 transition-colors hover:bg-fill hover:text-label active:bg-fill-2";
-  if (!href || disabled) {
-    return (
-      <span aria-disabled className={`${cls} pointer-events-none opacity-35`} aria-label={label}>
-        {children}
-      </span>
-    );
-  }
-  return (
-    <Link href={href} className={cls} aria-label={label} title={label}>
-      {children}
-    </Link>
-  );
-}
