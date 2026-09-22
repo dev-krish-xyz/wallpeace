@@ -34,7 +34,8 @@ const screenFragment = /* glsl */ `
   }
 `;
 
-// Frosted glass: samples a blurred mip of the wallpaper behind the dock, then composites the icons.
+// Liquid glass: the wallpaper behind the dock, lightly blurred and refracted toward the center near
+// the rim (like a lens), with a specular highlight along the edge. Icons are composited on top.
 const dockFragment = /* glsl */ `
   uniform sampler2D mapA;
   uniform sampler2D mapB;
@@ -53,20 +54,29 @@ const dockFragment = /* glsl */ `
   }
 
   void main() {
-    vec2 uv = (rect.xy + vUv * rect.zw) * repeat + offset;
-    vec3 behind = mix(texture2D(mapA, uv, 5.0).rgb, texture2D(mapB, uv, 5.0).rgb, mixT);
-    vec3 glass = mix(behind, vec3(1.0), 0.32);
-
     vec2 p = (vUv - 0.5) * size;
     float d = sdRoundRect(p, size * 0.5, radius);
     float aa = fwidth(d);
     float mask = 1.0 - smoothstep(-aa, aa, d);
-    float rim = 1.0 - smoothstep(0.0, aa * 2.0, abs(d + aa * 1.2));
-    glass += rim * mix(0.18, 0.55, vUv.y);
+
+    // Lens: within the bevel near the rim, bend the view toward the center.
+    float bevel = size.y * 0.42;
+    float edge = 1.0 - clamp(-d / bevel, 0.0, 1.0); // 1 at the rim, 0 in the flat middle
+    vec2 lens = -(vUv - 0.5) * edge * edge * vec2(0.10, 0.34);
+    vec2 uv = (rect.xy + (vUv + lens) * rect.zw) * repeat + offset;
+    vec3 behind = mix(texture2D(mapA, uv, 1.6).rgb, texture2D(mapB, uv, 1.6).rgb, mixT);
+
+    // Mostly clear glass: a touch brighter, barely tinted, a little lift toward the top.
+    vec3 glass = behind * 1.02 + 0.015 + 0.03 * vUv.y;
+    glass = mix(glass, vec3(1.0), 0.03 + 0.04 * edge * edge);
+
+    // Specular rim: bright thin line on the top edge, fainter along the bottom.
+    float line = 1.0 - smoothstep(aa * 0.6, aa * 2.4, abs(d + aa * 1.4));
+    glass += line * mix(0.05, 0.22, smoothstep(0.35, 1.0, vUv.y));
 
     vec4 ic = texture2D(icons, vUv);
     vec3 color = mix(glass, ic.rgb, ic.a);
-    gl_FragColor = vec4(color, mask * 0.97);
+    gl_FragColor = vec4(color, mask);
     #include <colorspace_fragment>
   }
 `;

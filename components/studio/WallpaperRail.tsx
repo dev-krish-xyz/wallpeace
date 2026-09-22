@@ -5,18 +5,22 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { ChevronLeft, ChevronRight } from "@/components/ui/icons";
 import { displayUrl } from "@/lib/storage";
 import type { Wallpaper } from "@/types/database";
+import { armTicks, tick } from "./tick";
 
 // ─── Drum geometry ───────────────────────────────────────────────────────────
 // Angle between neighbors on the drum. Smaller = bigger ring, flatter curve.
 const STEP = (34 * Math.PI) / 180;
 const MAX_ANGLE = Math.PI / 2;
-// Cards tilt less than the drum surface would (1 = fully tangent), so neighbors stay readable.
-const TILT_FACTOR = 0.42;
-// Extra push into the distance beyond the drum's own curve.
-const DEPTH_BOOST = 1.25;
-// Spreads neighbors along the ring so perspective doesn't tuck them behind the active card.
-const SPREAD = 1.14;
+// Orb: while you turn the carousel, cards ride the surface of a cylinder (true circular path,
+// tilting with the surface). At rest the orb relaxes into a flat stack of same-size cards.
+const ORB_TILT = 0.85; // 1 = card lies exactly on the surface; a touch less keeps faces readable
+const ORB_HOLD_MS = 220; // keep the orb engaged this long after the last wheel event
+const ORB_IN_RATE = 45; // how fast the orb forms when you start turning (~3 frames)
+const ORB_OUT_RATE = 4.5; // how gently it relaxes back to flat when you stop
+// A card counts as arrived (sharpens and glows) within this fraction of a card from the center.
+const LOCK_DISTANCE = 0.03;
 const GAP = 16;
+const REST_GAP = 36; // gap between flat cards at rest
 // Depth-of-field blur by distance from the selected card, eased by CSS when the selection changes.
 const BLUR_BY_DISTANCE = [0, 1.75, 3.5];
 
@@ -76,6 +80,11 @@ export function WallpaperRail({
 
   const isVertical = () => typeof window !== "undefined" && window.matchMedia(DESKTOP).matches;
 
+  const tickedIndex = useRef(-1);
+  const orbLevel = useRef(0); // 0 = flat resting stack, 1 = full orb
+  const lockedIndex = useRef(-1); // last card handed to setRestingIndex
+  useEffect(() => armTicks(), []);
+
   /** Draws every card from `position`. Only transform/opacity change per frame. */
   const paint = useCallback(() => {
     const stage = stageRef.current;
@@ -84,14 +93,19 @@ export function WallpaperRail({
     const vertical = isVertical();
     const pitch = (vertical ? first.offsetHeight : first.offsetWidth) + GAP;
     const radius = pitch / STEP;
+    const restPitch = pitch - GAP + REST_GAP;
+    const level = orbLevel.current;
+    const orb = level * level * (3 - 2 * level); // smoothstep: eases in and out of the orb
 
     cardRefs.current.forEach((card, i) => {
       if (!card) return;
       const s = i - position.current;
       const angle = clamp(s * STEP, -MAX_ANGLE, MAX_ANGLE);
-      const along = (radius * Math.sin(angle) * SPREAD).toFixed(2);
-      const depth = (radius * (Math.cos(angle) - 1) * DEPTH_BOOST).toFixed(2);
-      const tilt = (-angle * TILT_FACTOR * 180) / Math.PI;
+      // Blend the flat resting layout into the true orb (circle of `radius`).
+      const flat = s * restPitch;
+      const along = (flat + (radius * Math.sin(angle) - flat) * orb).toFixed(2);
+      const depth = (radius * (Math.cos(angle) - 1) * orb).toFixed(2);
+      const tilt = (-angle * ORB_TILT * orb * 180) / Math.PI;
       const facing = Math.cos(angle);
       const transform = vertical
         ? `translate(-50%,-50%) translate3d(0,${along}px,${depth}px) rotateX(${tilt.toFixed(2)}deg)`
@@ -111,27 +125,51 @@ export function WallpaperRail({
       const overlay = card.lastElementChild as HTMLElement | null;
       if (overlay) overlay.style.opacity = shade;
     });
+
+    // Knob detent: tick whenever a new card crosses the center (drawn state only, no logic).
+    const centered = Math.round(position.current);
+    if (centered !== tickedIndex.current) {
+      if (tickedIndex.current !== -1) tick();
+      tickedIndex.current = centered;
+    }
   }, []);
 
   /** One loop eases `position` to `target` and stops itself when settled. */
   const run = useCallback(() => {
     if (raf.current) return;
     lastTime.current = performance.now();
-    const tick = (now: number) => {
+    const frame = (now: number) => {
       const dt = Math.min((now - lastTime.current) / 1000, 1 / 20);
       lastTime.current = now;
       if (!drag.current?.moved) {
         const diff = target.current - position.current;
         position.current = Math.abs(diff) < 0.0008 ? target.current : position.current + diff * (1 - Math.exp(-dt * EASE_RATE));
       }
+      // Visual only: the orb is engaged while you're turning (drag, wheel gesture, or travel),
+      // then relaxes to flat.
+      const engaged =
+        drag.current?.moved ||
+        performance.now() - wheel.current.lastEvent < ORB_HOLD_MS ||
+        Math.abs(target.current - position.current) > 0.02;
+      const goal = engaged ? 1 : 0;
+      orbLevel.current += (goal - orbLevel.current) * (1 - Math.exp(-dt * (engaged ? ORB_IN_RATE : ORB_OUT_RATE)));
+      if (!engaged && orbLevel.current < 0.002) orbLevel.current = 0;
       paint();
-      if (drag.current?.moved || position.current !== target.current) raf.current = requestAnimationFrame(tick);
+      // Lock (focus + glow) once the card has visually arrived, not after the easing tail or the orb
+      // relaxing.
+      const stopped = !drag.current?.moved && Math.abs(target.current - position.current) < LOCK_DISTANCE;
+      if (stopped && lockedIndex.current !== target.current) {
+        lockedIndex.current = target.current;
+        setRestingIndex(target.current);
+      }
+      if (drag.current?.moved || position.current !== target.current || orbLevel.current > 0)
+        raf.current = requestAnimationFrame(frame);
       else {
         raf.current = 0;
         setRestingIndex(target.current);
       }
     };
-    raf.current = requestAnimationFrame(tick);
+    raf.current = requestAnimationFrame(frame);
   }, [paint]);
 
   /** Moves to card `i` and makes it the selection. */
@@ -269,7 +307,7 @@ export function WallpaperRail({
       }}
       className={[
         "relative size-full touch-none select-none overflow-hidden",
-        "[perspective:700px] lg:[perspective:800px]",
+        "[perspective:600px] lg:[perspective:650px]",
         "[--item-w:64vw] sm:[--item-w:40vw] lg:[--item-w:min(28vw,460px)]",
         "[mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]",
         "lg:[mask-image:linear-gradient(to_bottom,transparent,black_14%,black_86%,transparent)]",
@@ -290,11 +328,12 @@ export function WallpaperRail({
             tabIndex={active ? 0 : -1}
             onClick={() => (active ? undefined : goTo(i))}
             onPointerEnter={() => onPreload(w)}
-            className="absolute top-1/2 left-1/2 aspect-[16/10] w-(--item-w) overflow-hidden rounded-[14px] bg-fill outline-offset-4 transition-[box-shadow,filter] duration-[380ms] ease-(--ease-mac) [backface-visibility:hidden] will-change-transform"
+            className="absolute top-1/2 left-1/2 aspect-[16/10] w-(--item-w) overflow-hidden rounded-[14px] bg-fill outline-offset-4 transition-[box-shadow,filter] duration-200 ease-(--ease-mac) [backface-visibility:hidden] will-change-transform"
             style={{
               filter: `blur(${BLUR_BY_DISTANCE[Math.min(Math.abs(i - restingIndex), BLUR_BY_DISTANCE.length - 1)]}px)`,
               boxShadow: i === restingIndex
-                ? "0 0 0 0.5px rgb(0 0 0 / 0.1), 0 18px 40px -16px rgb(0 0 0 / 0.45)"
+                ? // Locked: thin bright rim + faint accent halo, over the usual drop shadow.
+                  "0 0 0 1px rgb(255 255 255 / 0.75), 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 24px -4px color-mix(in srgb, var(--accent) 35%, transparent), 0 18px 40px -16px rgb(0 0 0 / 0.45)"
                 : "0 0 0 0.5px rgb(0 0 0 / 0.1), 0 4px 12px -6px rgb(0 0 0 / 0.2)",
             }}
           >
