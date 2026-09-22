@@ -22,15 +22,7 @@ export const getWallpapers = unstable_cache(
   { tags: [WALLPAPERS_TAG], revalidate: 300 },
 );
 
-export async function getWallpaperWithNeighbors(slug: string) {
+export async function getWallpaperBySlug(slug: string) {
   const all = await getWallpapers();
-  const index = all.findIndex((w) => w.slug === slug);
-  if (index === -1) return null;
-  return {
-    wallpaper: all[index],
-    prev: all[index - 1] ?? null,
-    next: all[index + 1] ?? null,
-    position: index + 1,
-    total: all.length,
-  };
+  return all.find((w) => w.slug === slug) ?? null;
 }

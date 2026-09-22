@@ -78,7 +78,7 @@ export default function MacBookScene({
           </ViewRig>
         </PresentationControls>
       </Suspense>
-      <ContactShadows position={[0, -0.002, 0]} opacity={0.38} scale={9} blur={2.6} far={1.4} resolution={1024} />
+      <ContactShadows position={[0, -0.002, 0]} opacity={0.38} scale={9} blur={2.6} far={1.4} resolution={512} />
 
       {/* Soft studio: rectangular light panels instead of a downloaded HDR. */}
       <Environment resolution={512} frames={1}>

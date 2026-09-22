@@ -37,7 +37,11 @@ function configure(tex: THREE.Texture) {
   return tex;
 }
 
-export function loadScreenTexture(url: string, inUse: Set<THREE.Texture>) {
+/**
+ * Loads (or reuses) a wallpaper texture. `inUse` is asked at eviction time, after the load
+ * finishes, so a texture that became visible in the meantime is never disposed.
+ */
+export function loadScreenTexture(url: string, inUse: () => Set<THREE.Texture>) {
   const hit = cache.get(url);
   if (hit) {
     // Refresh LRU position.
@@ -47,7 +51,7 @@ export function loadScreenTexture(url: string, inUse: Set<THREE.Texture>) {
   }
   const promise = fetchTexture(url).then((tex) => {
     loaded.set(url, configure(tex));
-    evict(inUse);
+    evict(inUse());
     return tex;
   });
   promise.catch(() => cache.delete(url));

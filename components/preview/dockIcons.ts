@@ -349,7 +349,7 @@ const TRASH: Draw = (ctx, s) => {
 
 const RUNNING = new Set([0, 1, 2]);
 
-export const DOCK_PX = { icon: 96, gap: 14, pad: 16 };
+const DOCK_PX = { icon: 96, gap: 14, pad: 16 };
 
 /** Returns a canvas whose pixels map 1:1 onto the dock plane. */
 export function drawDock() {

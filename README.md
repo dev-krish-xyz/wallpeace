@@ -25,7 +25,8 @@ No service-role key is needed: every write runs as the signed-in admin and is en
 
 ## How it works
 
-- **Gallery `/`** and **detail `/w/[slug]`** are statically rendered from one cached query (tag `wallpapers`), revalidated whenever the admin publishes, renames, features or deletes.
+- **Studio `/`** and **`/w/[slug]`** (same view, opened on one wallpaper) are statically rendered from one cached query (tag `wallpapers`), revalidated whenever the admin publishes, renames, features or deletes, and every 5 minutes as a safety net.
+- **Carousel** (`components/studio/WallpaperRail.tsx`) is a drum driven by a single position value, not native scrolling: one wallpaper per wheel gesture, drag with flick, ↑/↓ buttons. The MacBook texture swap and URL update wait until the selection settles.
 - **Storage layout:** `wallpapers/{id}/original.*` (download), `display.webp` (2560w, gallery via `next/image`), `screen.webp` (2560×1600 cover crop, 3D screen texture).
 - **Upload:** the browser sends the original straight to Storage via a signed URL, then a server action validates it with sharp, renders the derivatives and a blur placeholder, and inserts the row.
 - **3D MacBook** is ["Macbook pro 16 silver" by sugcx](https://sketchfab.com/3d-models/macbook-pro-16-silver-3a53a9dba68f45a48f4fd216fb43ca02) (CC BY 4.0, credited on the site).

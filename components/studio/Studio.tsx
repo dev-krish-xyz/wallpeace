@@ -56,6 +56,8 @@ export function Studio({ wallpapers, initialId }: { wallpapers: Wallpaper[]; ini
     if (preloaded.current.has(url)) return;
     preloaded.current.add(url);
     const img = new Image();
+    // Same CORS mode as the 3D texture loader, so its request reuses this cached response.
+    img.crossOrigin = "anonymous";
     img.decoding = "async";
     img.src = url;
   }, []);

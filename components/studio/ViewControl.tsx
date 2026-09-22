@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 
 /** Dot stops from one side view (-1) through front (0) to the other (+1). */
-export const VIEW_STOPS = [-1, -0.5, 0, 0.5, 1];
+const VIEW_STOPS = [-1, -0.5, 0, 0.5, 1];
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 const nearestStop = (v: number) => VIEW_STOPS.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a));

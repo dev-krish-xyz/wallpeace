@@ -1,7 +1,6 @@
 import { Brand, Toolbar } from "@/components/ui/Toolbar";
 import { EmptyLibrary } from "@/components/gallery/EmptyLibrary";
 import { Studio } from "@/components/studio/Studio";
-import { Credits } from "@/components/studio/Credits";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getWallpapers } from "@/lib/wallpapers";
 
@@ -11,7 +10,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Toolbar left={<Brand />} right={<Credits />} />
+      <Toolbar left={<Brand />} />
       {initial ? (
         <Studio wallpapers={wallpapers} initialId={initial.id} />
       ) : (

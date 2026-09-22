@@ -8,7 +8,7 @@ import { FINISHES, type Finish } from "./finishes";
 import { Dock, useScreenMaterial } from "./screen";
 
 // "Macbook pro 16 silver" by sugcx, CC BY 4.0, optimized with scripts/optimize-model.mjs.
-export const MODEL_URL = "/models/macbook-pro-16.glb";
+const MODEL_URL = "/models/macbook-pro-16.glb";
 
 const TARGET_WIDTH = 3.56; // 35.6 cm; the scene uses 1 unit = 10 cm
 // Hinge line in the Lid's parent space, read off the lid and base bounds of the model.

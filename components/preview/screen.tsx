@@ -71,7 +71,7 @@ const dockFragment = /* glsl */ `
   }
 `;
 
-export type ScreenUniforms = {
+type ScreenUniforms = {
   mapA: { value: THREE.Texture };
   mapB: { value: THREE.Texture };
   mixT: { value: number };
@@ -109,7 +109,7 @@ export function useScreenMaterial(url: string, aspect: number, onReady: () => vo
 
   useEffect(() => {
     let cancelled = false;
-    const inUse = new Set([uniforms.mapA.value, uniforms.mapB.value]);
+    const inUse = () => new Set([uniforms.mapA.value, uniforms.mapB.value]);
     loadScreenTexture(url, inUse).then((tex) => {
       if (cancelled || tex === uniforms.mapB.value) return;
       if (!readySent.current) {

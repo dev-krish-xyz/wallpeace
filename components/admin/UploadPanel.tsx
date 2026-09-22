@@ -6,9 +6,8 @@ import { createUpload, finalizeUpload } from "@/app/admin/actions";
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
 import { Check, Plus, XMark } from "@/components/ui/icons";
-import { MAX_UPLOAD_BYTES } from "@/lib/env";
 import { slugify, titleFromFilename } from "@/lib/slug";
-import { ACCEPTED_TYPES } from "./constants";
+import { ACCEPTED_TYPES, MAX_UPLOAD_BYTES } from "@/lib/uploads";
 import { uploadOriginal } from "./uploadOriginal";
 
 type Status = "ready" | "uploading" | "processing" | "done" | "error";

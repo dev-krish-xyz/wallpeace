@@ -1,10 +1,12 @@
 import "server-only";
 import sharp from "sharp";
 
-const ACCEPTED = new Set(["png", "jpeg", "webp"]);
-import { IMMUTABLE_CACHE_SECONDS as IMMUTABLE } from "@/components/admin/constants";
+import { IMMUTABLE_CACHE_SECONDS } from "@/lib/uploads";
 
-export const IMAGE_CACHE_CONTROL = IMMUTABLE;
+// sharp's names for the formats in UPLOAD_TYPES.
+const ACCEPTED = new Set(["png", "jpeg", "webp"]);
+
+export const IMAGE_CACHE_CONTROL = IMMUTABLE_CACHE_SECONDS;
 
 /** Validates an uploaded original and renders the web derivatives. */
 export async function processWallpaper(input: Buffer) {

@@ -6,4 +6,3 @@ export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
 export const BUCKET = "wallpapers";
 export const WALLPAPERS_TAG = "wallpapers";
-export const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;

@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Brand, Toolbar } from "@/components/ui/Toolbar";
 import { Studio } from "@/components/studio/Studio";
-import { Credits } from "@/components/studio/Credits";
 import { formatResolution } from "@/lib/format";
 import { displayUrl } from "@/lib/storage";
-import { getWallpaperWithNeighbors, getWallpapers } from "@/lib/wallpapers";
+import { getWallpaperBySlug, getWallpapers } from "@/lib/wallpapers";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -16,9 +15,8 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const data = await getWallpaperWithNeighbors(slug);
-  if (!data) return {};
-  const { wallpaper: w } = data;
+  const w = await getWallpaperBySlug(slug);
+  if (!w) return {};
   return {
     title: w.title,
     description: `${w.title}, an original ${formatResolution(w.width, w.height)} desktop wallpaper.`,
@@ -30,13 +28,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 /** Same studio as the home page, opened on a specific wallpaper (shareable link). */
 export default async function WallpaperPage({ params }: Props) {
   const { slug } = await params;
-  const [data, wallpapers] = await Promise.all([getWallpaperWithNeighbors(slug), getWallpapers()]);
-  if (!data) notFound();
+  const [wallpaper, wallpapers] = await Promise.all([getWallpaperBySlug(slug), getWallpapers()]);
+  if (!wallpaper) notFound();
 
   return (
     <>
-      <Toolbar left={<Brand />} right={<Credits />} />
-      <Studio wallpapers={wallpapers} initialId={data.wallpaper.id} />
+      <Toolbar left={<Brand />} />
+      <Studio wallpapers={wallpapers} initialId={wallpaper.id} />
     </>
   );
 }

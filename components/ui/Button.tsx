@@ -18,7 +18,7 @@ const sizes = {
   lg: "h-11 px-5 text-[15px] rounded-[11px]",
 };
 
-export function buttonClass(variant: Variant = "secondary", size: keyof typeof sizes = "md") {
+function buttonClass(variant: Variant = "secondary", size: keyof typeof sizes = "md") {
   return `inline-flex select-none items-center justify-center gap-1.5 font-medium transition-[filter,background-color,opacity] duration-150 disabled:pointer-events-none disabled:opacity-40 ${variants[variant]} ${sizes[size]}`;
 }
 

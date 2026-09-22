@@ -1,5 +1,5 @@
 import { BUCKET, SUPABASE_KEY, SUPABASE_URL } from "@/lib/env";
-import { IMMUTABLE_CACHE_SECONDS } from "./constants";
+import { IMMUTABLE_CACHE_SECONDS } from "@/lib/uploads";
 
 /** PUTs a file to a Supabase signed upload URL, reporting progress (supabase-js can't). */
 export function uploadOriginal(path: string, token: string, file: File, onProgress: (fraction: number) => void) {

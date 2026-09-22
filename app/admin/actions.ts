@@ -4,13 +4,13 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
-import { BUCKET, MAX_UPLOAD_BYTES, WALLPAPERS_TAG } from "@/lib/env";
+import { BUCKET, WALLPAPERS_TAG } from "@/lib/env";
 import { slugify } from "@/lib/slug";
 import { publicUrl, storagePaths } from "@/lib/storage";
+import { createSupabaseServer } from "@/lib/supabase/server";
+import { MAX_UPLOAD_BYTES, UPLOAD_TYPES } from "@/lib/uploads";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
-
-const EXTENSIONS: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 
 const fail = (e: unknown): { ok: false; error: string } => ({
   ok: false,
@@ -29,7 +29,7 @@ export async function createUpload(input: { contentType: string; size: number })
 > {
   try {
     const { supabase } = await requireAdmin();
-    const ext = EXTENSIONS[input.contentType];
+    const ext = UPLOAD_TYPES[input.contentType];
     if (!ext) return { ok: false, error: "Use PNG, JPEG or WebP." };
     if (input.size > MAX_UPLOAD_BYTES) return { ok: false, error: "File is larger than 100 MB." };
 
@@ -140,7 +140,7 @@ export async function renameWallpaper(id: string, title: string): Promise<Result
 export async function deleteWallpaper(id: string): Promise<Result> {
   try {
     const { supabase } = await requireAdmin();
-    const { data: row, error } = await supabase.from("wallpapers").delete().eq("id", id).select("slug,file_url").single();
+    const { data: row, error } = await supabase.from("wallpapers").delete().eq("id", id).select("slug").single();
     if (error) throw error;
     const { data: files } = await supabase.storage.from(BUCKET).list(id);
     if (files?.length) await supabase.storage.from(BUCKET).remove(files.map((f) => `${id}/${f.name}`));
@@ -152,7 +152,6 @@ export async function deleteWallpaper(id: string): Promise<Result> {
 }
 
 export async function signOut() {
-  const { createSupabaseServer } = await import("@/lib/supabase/server");
   const supabase = await createSupabaseServer();
   await supabase.auth.signOut();
   redirect("/admin/login");

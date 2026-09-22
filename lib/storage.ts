@@ -6,7 +6,6 @@ import type { Wallpaper } from "@/types/database";
 //   {id}/display.webp             2560w, aspect preserved, used by the gallery
 //   {id}/screen.webp              2560×1600 cover crop, the 3D screen texture
 export const storagePaths = (id: string) => ({
-  folder: id,
   display: `${id}/display.webp`,
   screen: `${id}/screen.webp`,
   original: (ext: string) => `${id}/original.${ext}`,
