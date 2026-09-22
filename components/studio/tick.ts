@@ -6,7 +6,7 @@ let noise: AudioBuffer | null = null;
 let output: GainNode | null = null;
 let lastTick = 0;
 
-const VOLUME = 0.32;
+const VOLUME = 0.196;
 const MIN_GAP_MS = 28; // fast spins don't turn into a buzz
 
 function setup() {

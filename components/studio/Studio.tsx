@@ -116,8 +116,8 @@ export function Studio({
   return (
     <div className="flex flex-col lg:grid lg:h-[calc(100dvh-52px)] lg:grid-cols-[40%_1fr]">
       {/* Sidebar carousel */}
-      <aside className="relative order-2 border-separator bg-grouped pt-4 pb-2 lg:order-1 lg:min-h-0 lg:border-r lg:p-0">
-        <div className="mb-2 flex items-baseline justify-end px-5 lg:absolute lg:inset-x-0 lg:top-0 lg:z-10 lg:mb-0 lg:px-6 lg:pt-5">
+      <aside className="relative order-2 border-separator bg-grouped pt-3 pb-2 lg:order-1 lg:min-h-0 lg:border-r lg:p-0">
+        <div className="mb-1 flex items-baseline justify-end px-5 lg:absolute lg:inset-x-0 lg:top-0 lg:z-10 lg:mb-0 lg:px-6 lg:pt-5">
           {heading && <h1 className="sr-only">{heading}</h1>}
           <span className="text-[12px] text-label-3 tabular-nums">
             {index + 1} of {wallpapers.length}
@@ -140,7 +140,7 @@ export function Studio({
 
       {/* Stage */}
       <section className="order-1 flex min-h-0 flex-col lg:order-2">
-        <div className="relative h-[clamp(280px,62vw,520px)] lg:h-auto lg:min-h-0 lg:flex-1">
+        <div className="relative h-[clamp(232px,58vw,520px)] sm:h-[clamp(280px,62vw,520px)] lg:h-auto lg:min-h-0 lg:flex-1">
           <MacBookStage
             screenUrl={screenUrl(committed)}
             fallbackUrl={displayUrl(committed)}
@@ -149,11 +149,11 @@ export function Studio({
             view={view}
           />
         </div>
-        <div className="flex justify-center pb-3">
+        <div className="flex justify-center pb-2 lg:pb-3">
           <ViewControl value={view} onChange={setView} />
         </div>
 
-        <div className="flex flex-col gap-4 px-5 pt-2 pb-6 sm:flex-row sm:items-end sm:justify-between lg:px-10 lg:pb-8">
+        <div className="flex flex-col gap-3 px-5 pt-2 pb-4 sm:flex-row sm:gap-4 sm:pb-6 sm:items-end sm:justify-between lg:px-10 lg:pb-8">
           <div className="min-w-0">
             {selected.featured && <p className="mb-0.5 text-[12px] font-semibold text-accent">Featured</p>}
             <Title className="truncate font-display text-[22px] font-semibold tracking-[-0.015em] text-label">

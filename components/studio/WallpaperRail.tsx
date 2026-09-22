@@ -309,7 +309,7 @@ export function WallpaperRail({
         "relative size-full touch-none select-none overflow-hidden",
         "[perspective:600px] lg:[perspective:650px]",
         // Where the locked card sits: a little above center on the vertical (desktop) rail.
-        "[--center-y:50%] lg:[--center-y:45%] [perspective-origin:50%_var(--center-y)]",
+        "[--center-y:50%] lg:[--center-y:calc(45%_+_12px)] [perspective-origin:50%_var(--center-y)]",
         "[--item-w:64vw] sm:[--item-w:40vw] lg:[--item-w:min(28vw,460px)]",
         "[mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]",
         "lg:[mask-image:linear-gradient(to_bottom,transparent,black_14%,black_86%,transparent)]",

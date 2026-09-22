@@ -8,15 +8,21 @@ import { MacBookModel } from "./MacBookModel";
 import type { Finish } from "./finishes";
 
 const TARGET: [number, number, number] = [0, 0.95, -0.5];
+// Phones: the stage is short and wide there, so the camera sits a little further back and aims
+// lower (which lifts the laptop), keeping the angled views and the shadow in frame.
+const PHONE_TARGET: [number, number, number] = [0, 0.82, -0.5];
+const PHONE = "(max-width: 639px)";
+// Phones have 3x screens; rendering at 2x there makes the wallpaper on the screen look soft.
+const isPhone = () => typeof window !== "undefined" && window.matchMedia(PHONE).matches;
 
 /** Keeps the whole laptop in frame on any aspect ratio. */
 function Framing() {
   const { camera, size, invalidate } = useThree();
   useLayoutEffect(() => {
     const aspect = size.width / size.height;
-    const distance = 6.0 * Math.max(1, 1.62 / aspect);
+    const distance = (isPhone() ? 6.15 : 6.0) * Math.max(1, 1.62 / aspect);
     camera.position.set(0, 1.7, distance);
-    camera.lookAt(...TARGET);
+    camera.lookAt(...(isPhone() ? PHONE_TARGET : TARGET));
     camera.updateProjectionMatrix();
     invalidate();
   }, [camera, size, invalidate]);
@@ -62,7 +68,7 @@ export default function MacBookScene({
   return (
     <Canvas
       frameloop="demand"
-      dpr={[1, 2]}
+      dpr={isPhone() ? [1, 3] : [1, 2]}
       camera={{ fov: 28, near: 0.1, far: 50 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       className="!touch-pan-y"

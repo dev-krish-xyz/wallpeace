@@ -11,7 +11,8 @@
 //   app/apple-icon.png      180          iOS/macOS home screen; opaque, the system rounds it
 //   public/icon-192.png     192          web app manifest
 //   public/icon-512.png     512          web app manifest
-//   public/logo.png         256          in-page logo (toolbar, admin login)
+//   public/logo.webp        512          in-page logo (toolbar, admin login); full color, served as-is so it stays
+//                                        sharp under browser zoom on Retina screens
 import { writeFile } from "node:fs/promises";
 import sharp from "sharp";
 
@@ -107,7 +108,7 @@ const outputs = {
     .toBuffer(),
   "public/icon-192.png": await png(192),
   "public/icon-512.png": await png(512),
-  "public/logo.png": await png(256),
+  "public/logo.webp": await sharp(master).resize(512, 512, { kernel: "lanczos3" }).webp({ quality: 92, alphaQuality: 100, smartSubsample: true, effort: 6 }).toBuffer(),
 };
 
 for (const [path, data] of Object.entries(outputs)) {

@@ -8,6 +8,7 @@ import { loadScreenTexture } from "./screenTextures";
 
 const CROSSFADE_SECONDS = 0.22;
 const WALLPAPER_ASPECT = 16 / 10; // screen.webp is rendered at 2560×1600
+const PHONE = "(max-width: 639px)";
 
 const vertexShader = /* glsl */ `
   varying vec2 vUv;
@@ -23,10 +24,11 @@ const screenFragment = /* glsl */ `
   uniform float mixT;
   uniform vec2 repeat;
   uniform vec2 offset;
+  uniform float lodBias;
   varying vec2 vUv;
   void main() {
     vec2 uv = vUv * repeat + offset;
-    vec3 c = mix(texture2D(mapA, uv).rgb, texture2D(mapB, uv).rgb, mixT);
+    vec3 c = mix(texture2D(mapA, uv, lodBias).rgb, texture2D(mapB, uv, lodBias).rgb, mixT);
     // Faint diagonal sheen from the cover glass.
     c += smoothstep(0.62, 1.1, vUv.x * 0.55 + vUv.y * 0.75) * 0.03;
     gl_FragColor = vec4(c, 1.0);
@@ -113,7 +115,14 @@ export function useScreenMaterial(url: string, aspect: number, onReady: () => vo
   }, [aspect]);
 
   const material = useMemo(
-    () => new THREE.ShaderMaterial({ vertexShader, fragmentShader: screenFragment, uniforms }),
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader: screenFragment,
+        // On phones the 2560px wallpaper is shrunk a lot, so the GPU samples a small, soft mip
+        // level; a negative bias picks the next sharper one.
+        uniforms: { ...uniforms, lodBias: { value: window.matchMedia(PHONE).matches ? -0.75 : 0 } },
+      }),
     [uniforms],
   );
 

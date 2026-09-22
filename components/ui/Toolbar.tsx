@@ -15,13 +15,14 @@ export function Toolbar({ left, right }: { left?: React.ReactNode; right?: React
 
 export function Brand({ suffix }: { suffix?: string }) {
   return (
-    <Link href="/" className="flex items-center gap-3 rounded-md text-[17px] font-bold tracking-[-0.015em]">
+    <Link href="/" className="flex items-center gap-2 rounded-md text-[17px] font-bold tracking-[-0.015em]">
       <Image
-        src="/logo.png"
+        src="/logo.webp"
         alt=""
         width={30}
         height={30}
         priority
+        unoptimized
         className="drop-shadow-[0_0.5px_1px_rgb(0_0_0/0.2)]"
       />
       <span>Wallpeace</span>
