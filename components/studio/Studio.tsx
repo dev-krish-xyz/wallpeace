@@ -161,7 +161,14 @@ export function Studio({
 
         <div className="flex flex-col gap-3 px-5 pt-2 pb-4 sm:flex-row sm:gap-4 sm:pb-6 sm:items-end sm:justify-between lg:px-10 lg:pb-8">
           <div className="min-w-0">
-            {selected.featured && <p className="mb-0.5 text-[12px] font-semibold text-accent">Featured</p>}
+            {/* Always in the layout, only sometimes visible: appearing would otherwise resize the
+             *  stage above it (desktop) and push the rail down (mobile) as you scroll the rail. */}
+            <p
+              aria-hidden={!selected.featured}
+              className={`mb-0.5 text-[12px] font-semibold text-accent ${selected.featured ? "" : "invisible"}`}
+            >
+              Featured
+            </p>
             <Title className="truncate font-display text-[17px] font-semibold sm:text-[22px] tracking-[-0.015em] text-label">
               {displayTitle(selected.title)}
             </Title>
