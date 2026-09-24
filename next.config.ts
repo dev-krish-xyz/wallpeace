@@ -23,6 +23,9 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
+    // 75 is the default every wallpaper uses; 95 is the brand banner, which is a flat sky the
+    // optimizer would band at 75. Next 16 refuses any quality not listed here.
+    qualities: [75, 95],
     minimumCacheTTL: 60 * 60 * 24 * 365,
     remotePatterns: supabaseHost
       ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/wallpapers/**" }]

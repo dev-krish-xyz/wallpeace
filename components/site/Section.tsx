@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Reveal } from "./Reveal";
 
-/** A titled block of a page, with an optional "See All"-style link on the right. */
+type Action = { href: string; label: string };
+
+/** A titled block of a page, with one or more "See All"-style links on the right. */
 export function Section({
   title,
   eyebrow,
@@ -12,21 +14,27 @@ export function Section({
   title: string;
   eyebrow?: string;
   subtitle?: string;
-  action?: { href: string; label: string };
+  /** One link, or several: they sit in a row, with the last one being the section's own. */
+  action?: Action | Action[];
   children: React.ReactNode;
 }) {
+  const actions = action ? (Array.isArray(action) ? action : [action]) : [];
   return (
     <section>
-      <Reveal className="mb-5 flex items-end justify-between gap-4">
+      <Reveal className="mb-6 flex items-end justify-between gap-4 sm:mb-7">
         <div className="min-w-0">
-          {eyebrow && <p className="mb-0.5 text-[12px] font-semibold text-accent">{eyebrow}</p>}
-          <h2 className="font-display text-[22px] font-semibold tracking-[-0.015em] text-label">{title}</h2>
-          {subtitle && <p className="mt-0.5 text-[13px] text-label-2">{subtitle}</p>}
+          {eyebrow && <p className="mb-1 text-[13px] font-semibold text-accent">{eyebrow}</p>}
+          <h2 className="font-display text-[30px] font-semibold tracking-[-0.021em] text-label sm:text-[36px]">{title}</h2>
+          {subtitle && <p className="mt-1 text-[14px] text-label-2 sm:text-[15px]">{subtitle}</p>}
         </div>
-        {action && (
-          <Link href={action.href} className="shrink-0 rounded-md text-[13px] font-medium text-accent hover:underline">
-            {action.label}
-          </Link>
+        {actions.length > 0 && (
+          <div className="flex shrink-0 items-center gap-4">
+            {actions.map((a) => (
+              <Link key={a.href} href={a.href} className="rounded-md text-[14px] font-medium text-accent hover:underline">
+                {a.label}
+              </Link>
+            ))}
+          </div>
         )}
       </Reveal>
       {children}
@@ -39,8 +47,8 @@ export function PageHeader({ title, subtitle, children }: { title: string; subti
   return (
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <h1 className="font-display text-[28px] font-semibold tracking-[-0.02em] text-label">{title}</h1>
-        {subtitle && <p className="mt-1 max-w-[60ch] text-[13px] leading-snug text-label-2">{subtitle}</p>}
+        <h1 className="font-display text-[36px] font-semibold tracking-[-0.024em] text-label sm:text-[44px]">{title}</h1>
+        {subtitle && <p className="mt-1.5 max-w-[60ch] text-[14px] leading-snug text-label-2 sm:text-[15px]">{subtitle}</p>}
       </div>
       {children}
     </div>

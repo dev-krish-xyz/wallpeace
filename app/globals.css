@@ -75,6 +75,22 @@ body {
   animation: appear 0.6s var(--ease-mac) both;
 }
 
+/* One row of the gallery marquee. The track holds the same cards twice, so at half its width the
+ * copy sits exactly where the original started and the loop has no seam. Two keyframes rather than
+ * one played backwards: `animation-direction` is part of the `animation` shorthand, so the
+ * shorthand utility that names the keyframes would reset it and both rows would run the same way. */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-back {
+  from {
+    transform: translateX(-50%);
+  }
+}
+
 /* --- Premium feature demonstrations -------------------------------------------------------- */
 
 /* Each demonstration plays only while it is on screen, and plays again from the top every time it

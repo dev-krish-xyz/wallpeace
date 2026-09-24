@@ -43,7 +43,7 @@ export default function AboutPage() {
           unoptimized
           className="drop-shadow-[0_2px_5px_rgb(0_0_0/0.18)]"
         />
-        <h1 className="mt-6 font-display text-[28px] font-semibold tracking-[-0.02em] text-label">About Wallpeace</h1>
+        <h1 className="mt-6 font-display text-[36px] font-semibold tracking-[-0.024em] text-label sm:text-[44px]">About Wallpeace</h1>
 
         <div className="mt-4 flex flex-col gap-4 text-[15px] leading-relaxed text-label-2">
           <p>
@@ -57,7 +57,7 @@ export default function AboutPage() {
           </p>
         </div>
 
-        <h2 className="mt-14 font-display text-[22px] font-semibold tracking-[-0.015em] text-label">How each one is made</h2>
+        <h2 className="mt-14 font-display text-[30px] font-semibold tracking-[-0.021em] text-label sm:text-[36px]">How each one is made</h2>
         <ol className="mt-5 flex flex-col gap-5">
           {PROCESS.map((step, i) => (
             <li key={step.title} className="flex gap-4">

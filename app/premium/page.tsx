@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { ComingSoonBadge, PremiumPoints } from "@/components/site/Premium";
+import type { QA } from "@/components/site/Faq";
+import { Faq } from "@/components/site/Faq";
+import { PremiumFeatures } from "@/components/site/Premium";
 import { Pricing } from "@/components/site/Pricing";
 import { PremiumShowcase } from "@/components/site/PremiumShowcase";
 import { PageBody } from "@/components/site/Section";
@@ -10,11 +12,11 @@ import { getWallpapers } from "@/lib/wallpapers";
 
 export const metadata: Metadata = {
   title: "Premium",
-  description: "Wallpeace Premium is coming soon: complete series, master files and early access. The free library stays free.",
+  description: "Wallpeace Premium: complete series, 8K masters, live wallpapers and custom requests, from $5 once. The free library stays free.",
   alternates: { canonical: "/premium" },
 };
 
-const FAQ = [
+const FAQ: QA[] = [
   {
     q: "Will the free wallpapers stay free?",
     a: "Yes. Everything in the free library stays free to download. Premium is a separate set on top of it.",
@@ -28,8 +30,8 @@ const FAQ = [
     a: "Premium is the full wallpaper library up to 6K. Premium+ adds 8K masters, live and dynamic wallpapers, multi-monitor packs, custom requests and a commercial-use license.",
   },
   {
-    q: "When is it launching?",
-    a: "Soon. This page is where you'll be able to unlock premium wallpapers once it's ready.",
+    q: "How much is it?",
+    a: "Premium is $5 and Premium+ is $15, each paid once. There is no subscription and no renewal.",
   },
 ];
 
@@ -42,41 +44,29 @@ export default async function PremiumPage() {
       <PageBody className="flex flex-col gap-16 lg:gap-20">
         {/* The prose keeps the narrow measure of the other pages; the pricing grid goes wide. */}
         <div className="max-w-[720px]">
-          <ComingSoonBadge />
-          <h1 className="mt-3 flex items-center gap-2.5 font-display text-[28px] font-semibold tracking-[-0.02em] text-label">
-            <StarFill width={26} height={26} className="text-premium" />
+          <h1 className=" flex items-center gap-2.5 font-display text-[36px] font-semibold tracking-[-0.024em] text-label sm:text-[44px]">
+            <StarFill width={32} height={32} className="text-premium" />
             Wallpeace Premium
           </h1>
-          <p className="mt-3 text-[15px] leading-relaxed text-label-2">
-            Premium is a members-only library of the most ambitious Wallpeace wallpapers: bigger scenes, complete series
-            and the original master files. It&apos;s being built now and isn&apos;t available yet.
+          <p className="mt-3 text-[16px] leading-relaxed text-label-2">
+            Premium is a members-only library of the most ambitious Wallpeace wallpapers: bigger scenes, complete
+            series and the original master files. $5 for Premium, $15 for Premium+, paid once.
           </p>
 
-          <div className="mt-12">
-            <PremiumPoints />
-          </div>
         </div>
 
-        <Pricing />
+        <PremiumFeatures />
 
         <PremiumShowcase wallpapers={wallpapers} />
 
-        <div className="max-w-[720px]">
-          <h2 className="font-display text-[22px] font-semibold tracking-[-0.015em] text-label">Questions</h2>
-          <dl className="mt-5 flex flex-col gap-5">
-            {FAQ.map((f) => (
-              <div key={f.q}>
-                <dt className="text-[15px] font-semibold text-label">{f.q}</dt>
-                <dd className="mt-0.5 text-[14px] leading-relaxed text-label-2">{f.a}</dd>
-              </div>
-            ))}
-          </dl>
+        <Pricing />
 
-          <div className="mt-14">
-            <ButtonLink href="/browse" variant="primary" size="sm">
-              Browse Free Wallpapers
-            </ButtonLink>
-          </div>
+        <Faq items={FAQ} />
+
+        <div className="flex justify-center">
+          <ButtonLink href="/browse" variant="primary" size="md">
+            Browse Free Wallpapers
+          </ButtonLink>
         </div>
       </PageBody>
     </>

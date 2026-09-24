@@ -49,7 +49,7 @@ function alt(w: Wallpaper) {
 
 function Tier({ plus }: { plus?: boolean }) {
   return (
-    <span className="inline-flex h-[20px] items-center gap-1 rounded-full bg-fill-2 px-2 text-[11px] font-semibold text-label-2">
+    <span className="inline-flex h-[22px] items-center gap-1 rounded-full bg-premium/12 px-2.5 text-[12px] font-semibold text-premium">
       {plus && <StarFill width={9} height={9} className="text-premium" />}
       {plus ? "Premium+" : "Premium"}
     </span>
@@ -72,11 +72,11 @@ function Demo({
   children: React.ReactNode;
 }) {
   return (
-    <Scene className="grid items-center gap-7 lg:grid-cols-2 lg:gap-14">
+    <Scene className="grid items-center gap-6 lg:grid-cols-2 lg:gap-12">
       <div className={`min-w-0 ${flip ? "lg:order-2" : ""}`}>
         {tier}
-        <h3 className="mt-2.5 font-display text-[19px] font-semibold tracking-[-0.015em] text-label">{title}</h3>
-        <p className="mt-1.5 max-w-[42ch] text-[13px] leading-relaxed text-label-2">{body}</p>
+        <h3 className="mt-3.5 font-display text-[25px] font-semibold tracking-[-0.02em] text-label sm:text-[29px]">{title}</h3>
+        <p className="mt-2.5 max-w-[46ch] text-[16px] leading-relaxed text-label-2 sm:text-[17px]">{body}</p>
       </div>
       <div className="min-w-0">{children}</div>
     </Scene>
@@ -99,7 +99,7 @@ function Resolution({ w }: { w: Wallpaper }) {
   const start = 0.55;
   return (
     <Parallax amount={10}>
-      <MacBookFrame className="mx-auto w-[88%] [animation:device-in_0.7s_var(--ease-mac)_both] sm:w-[80%]">
+      <MacBookFrame className="mx-auto w-[94%] [animation:device-in_0.7s_var(--ease-mac)_both] sm:w-[92%]">
         {/* The screen's contents move, not the frame: a camera push, not a growing laptop. */}
         <div
           className="absolute inset-0 [animation:push-in_7s_var(--ease-mac)_both]"
@@ -265,7 +265,7 @@ const MOTES = [
 function Live({ w }: { w: Wallpaper }) {
   return (
     <Parallax amount={8}>
-      <MacBookFrame className="mx-auto w-[88%] [animation:device-in_0.7s_var(--ease-mac)_both] sm:w-[80%]">
+      <MacBookFrame className="mx-auto w-[94%] [animation:device-in_0.7s_var(--ease-mac)_both] sm:w-[92%]">
         {/* The breath. `alternate` returns it to exactly where it started, so the loop has no cut. */}
         <Image
           src={displayUrl(w)}
@@ -331,7 +331,7 @@ function DayNight({ w }: { w: Wallpaper }) {
   const START = "0.6s";
   return (
     <Parallax amount={8}>
-      <div className="mx-auto w-[88%] sm:w-[80%]">
+      <div className="mx-auto w-[94%] sm:w-[92%]">
         <MonitorFrame className="[animation:device-in_0.7s_var(--ease-mac)_both]">
           <Image
             src={displayUrl(w)}
@@ -440,7 +440,7 @@ function Series({ cast }: { cast: Cast }) {
 function Request({ w }: { w: Wallpaper }) {
   return (
     <div className="relative">
-      <MacBookFrame className="mx-auto w-[88%] [animation:device-in_0.7s_var(--ease-mac)_both] sm:w-[82%]">
+      <MacBookFrame className="mx-auto w-[94%] [animation:device-in_0.7s_var(--ease-mac)_both] sm:w-[92%]">
         {/* The screen waits, empty, until there is something to put on it. */}
         <div aria-hidden className="absolute inset-0 bg-fill-2" />
         <Image
@@ -493,15 +493,15 @@ export function PremiumShowcase({ wallpapers }: { wallpapers: Wallpaper[] }) {
     // widen the page on a phone. `clip`, not `hidden`: no scroll container, no trapped fixed children.
     <section aria-labelledby="showcase-title" className="overflow-x-clip">
       <Reveal className="max-w-[720px]">
-        <h2 id="showcase-title" className="font-display text-[22px] font-semibold tracking-[-0.015em] text-label">
+        <h2 id="showcase-title" className="font-display text-[30px] font-semibold tracking-[-0.021em] text-label sm:text-[36px]">
           What Premium adds
         </h2>
-        <p className="mt-1 text-[13px] leading-snug text-label-2">
+        <p className="mt-2 text-[15px] leading-snug text-label-2 sm:text-[16px]">
           Shown with wallpapers from the free library. The premium versions go further in every direction.
         </p>
       </Reveal>
 
-      <div className="mt-12 flex flex-col gap-16 lg:gap-24">
+      <div className="mt-9 flex flex-col gap-12 lg:gap-16">
         <Demo
           tier={<Tier />}
           title="4K, 6K, then 8K"
