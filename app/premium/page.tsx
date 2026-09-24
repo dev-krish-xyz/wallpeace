@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { ComingSoonBadge, PremiumPoints } from "@/components/site/Premium";
 import { Pricing } from "@/components/site/Pricing";
+import { PremiumShowcase } from "@/components/site/PremiumShowcase";
 import { PageBody } from "@/components/site/Section";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { ButtonLink } from "@/components/ui/Button";
 import { StarFill } from "@/components/ui/icons";
+import { getWallpapers } from "@/lib/wallpapers";
 
 export const metadata: Metadata = {
   title: "Premium",
@@ -31,7 +33,9 @@ const FAQ = [
   },
 ];
 
-export default function PremiumPage() {
+export default async function PremiumPage() {
+  const wallpapers = await getWallpapers();
+
   return (
     <>
       <SiteHeader />
@@ -54,6 +58,8 @@ export default function PremiumPage() {
         </div>
 
         <Pricing />
+
+        <PremiumShowcase wallpapers={wallpapers} />
 
         <div className="max-w-[720px]">
           <h2 className="font-display text-[22px] font-semibold tracking-[-0.015em] text-label">Questions</h2>

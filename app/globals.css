@@ -75,11 +75,320 @@ body {
   animation: appear 0.6s var(--ease-mac) both;
 }
 
+/* --- Premium feature demonstrations -------------------------------------------------------- */
+
+/* Each demonstration plays only while it is on screen, and plays again from the top every time it
+ * comes back. `Scene` drops `data-shown` once the row is completely gone; taking the animation name
+ * away cancels the animation outright, and restoring it starts a fresh one. Pausing would not:
+ * a paused animation keeps its position and would resume mid-sequence. */
+[data-scene]:not([data-shown]),
+[data-scene]:not([data-shown]) *,
+[data-scene]:not([data-shown]) *::before,
+[data-scene]:not([data-shown]) *::after {
+  animation-name: none !important;
+}
+
+/* A device arriving: a short fade up onto the page. */
+@keyframes device-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.965);
+  }
+}
+
+/* Devices joining a lineup from one side or the other. */
+@keyframes enter-left {
+  from {
+    opacity: 0;
+    transform: translateX(-56px) scale(0.94);
+  }
+}
+
+@keyframes enter-right {
+  from {
+    opacity: 0;
+    transform: translateX(56px) scale(0.94);
+  }
+}
+
+/* The camera easing into the screen while the resolution climbs. */
+@keyframes push-in {
+  to {
+    transform: scale(1.13);
+  }
+}
+
+/* Detail arriving in three steps, one per resolution, holding on each. */
+@keyframes sharpen {
+  0% {
+    filter: blur(5.5px) saturate(0.88);
+  }
+  24%,
+  33% {
+    filter: blur(2.2px) saturate(0.95);
+  }
+  56%,
+  65% {
+    filter: blur(0.8px);
+  }
+  88%,
+  100% {
+    filter: none;
+  }
+}
+
+/* A readout that shows, holds, then hands over to the next one. */
+@keyframes chip-cycle {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  16%,
+  78% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+}
+
+/* The last readout, which stays: this is the state the sequence ends on. */
+@keyframes chip-land {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+}
+
+/* One scene settling into the shape of the screen it was cut for. */
+@keyframes reframe {
+  from {
+    transform: scale(1.32);
+  }
+}
+
+/* One picture drifting across three displays at once, to show it is one picture. Every display holds
+ * the same full-width picture, differently positioned, so the same transform about the same origin
+ * moves all three in step and the seams stay honest. The scale is the slack the drift moves into:
+ * 6% wider leaves 3% on each side, more than the 1.8% it travels, so no edge ever shows through. */
+@keyframes flow {
+  to {
+    transform: translateX(-1.8%) scale(1.06);
+  }
+}
+
+/* A wallpaper that moves: a slow drift, never a zoom you can catch in the act. Every looping
+ * animation below starts from, and returns to, the state the still image is already in, so the
+ * loop has no seam and the wallpaper is genuinely motionless until the delay runs out. */
+@keyframes drift {
+  to {
+    transform: scale(1.055);
+  }
+}
+
+/* Weather: one soft band of light crossing the sky, invisible at both ends of its loop. */
+@keyframes cloud-pass {
+  0% {
+    opacity: 0;
+    transform: translateX(-30%);
+  }
+  22%,
+  78% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(30%);
+  }
+}
+
+/* Embers, fireflies, spray — whatever the scene makes of a few drifting motes. */
+@keyframes float {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  25%,
+  62% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px);
+  }
+}
+
+/* Stars, out only for the night stretch of the daylight cycle it shares. */
+@keyframes stars {
+  0%,
+  56% {
+    opacity: 0;
+  }
+  72%,
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The timeline under the dynamic wallpaper, filling once per day. */
+@keyframes track {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* A card leaving the stack for its place in the fan. The stack is the pause in the middle. */
+@keyframes fan {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  24% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    transform: translateX(var(--x)) rotate(var(--r));
+  }
+}
+
+/* One card taking its turn in front, then giving it back: the sequence ends on the whole spread. */
+@keyframes focus-pop {
+  0%,
+  100% {
+    transform: none;
+    z-index: 0;
+  }
+  20%,
+  80% {
+    z-index: 5;
+  }
+  45% {
+    transform: scale(1.07);
+  }
+}
+
+@keyframes label-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* A step of a sequence: in, held, then out of the way of the next one. */
+@keyframes card-in-out {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  12%,
+  82% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+@keyframes progress {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* A light pass across the frame, to read as "playing". */
+@keyframes sweep {
+  from {
+    transform: translateX(-130%) skewX(-12deg);
+  }
+  to {
+    transform: translateX(240%) skewX(-12deg);
+  }
+}
+
+/* One 12s day: clear, then the warm hour, then night. Layers below share the cycle. */
+@keyframes daylight {
+  0%,
+  22% {
+    opacity: 0;
+    background: rgb(255 159 10 / 0.3);
+  }
+  38%,
+  52% {
+    opacity: 1;
+    background: rgb(255 132 30 / 0.34);
+  }
+  70%,
+  92% {
+    opacity: 1;
+    background: rgb(10 24 68 / 0.52);
+  }
+  100% {
+    opacity: 0;
+    background: rgb(255 159 10 / 0.3);
+  }
+}
+
+@keyframes daylight-tone {
+  0%,
+  22% {
+    filter: none;
+  }
+  38%,
+  52% {
+    filter: saturate(1.12) brightness(1.02);
+  }
+  70%,
+  92% {
+    filter: saturate(0.82) brightness(0.72);
+  }
+  100% {
+    filter: none;
+  }
+}
+
+/* Highlights one label of three; the three share it through animation-delay. */
+@keyframes phase {
+  0%,
+  30% {
+    opacity: 1;
+  }
+  36%,
+  100% {
+    opacity: 0.35;
+  }
+}
+
+/* The finished wallpaper arriving as a wipe rather than a fade. */
+@keyframes wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    /* Without this, a looping animation would restart every 0.01ms instead of stopping. */
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
