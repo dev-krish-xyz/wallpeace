@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { WallpaperMarquee } from "@/components/gallery/WallpaperMarquee";
 import { BrandBanner } from "@/components/site/BrandBanner";
+import { BrowseLibrary } from "@/components/site/BrowseLibrary";
 import { Faq, SITE_FAQ } from "@/components/site/Faq";
-import { PremiumTeaser } from "@/components/site/Premium";
 import { PremiumShowcase } from "@/components/site/PremiumShowcase";
 import { Pricing } from "@/components/site/Pricing";
 import { Reveal } from "@/components/site/Reveal";
@@ -76,10 +76,6 @@ export default async function HomePage() {
             </Section>
           )}
 
-          <Reveal>
-            <PremiumTeaser />
-          </Reveal>
-
           <PremiumShowcase wallpapers={wallpapers} />
 
           <Pricing />
@@ -87,20 +83,7 @@ export default async function HomePage() {
           <Faq items={SITE_FAQ} subtitle="The short answers. The longer ones are on the premium page." />
 
           <Reveal>
-            <section className="rounded-[14px] bg-grouped px-6 py-14 text-center">
-              <h2 className="font-display text-[30px] font-semibold tracking-[-0.021em] text-label sm:text-[36px]">Browse the Library</h2>
-              <p className="mx-auto mt-1.5 max-w-[46ch] text-[14px] leading-snug text-label-2 sm:text-[15px]">
-                All {wallpapers.length} wallpapers, sorted by newest or most downloaded, or grouped into collections.
-              </p>
-              <div className="mt-5 flex justify-center gap-2">
-                <ButtonLink href="/browse" variant="primary" size="sm">
-                  Browse All
-                </ButtonLink>
-                <ButtonLink href="/collections" variant="secondary" size="sm">
-                  Collections
-                </ButtonLink>
-              </div>
-            </section>
+            <BrowseLibrary wallpapers={wallpapers} />
           </Reveal>
         </PageBody>
       </div>
@@ -112,8 +95,8 @@ export default async function HomePage() {
 function FeaturedLead({ wallpaper: lead }: { wallpaper: Wallpaper }) {
   return (
     <Reveal className="grid items-center gap-5 lg:grid-cols-[2fr_1fr] lg:gap-10">
-      <Link href={`/w/${lead.slug}`} className="group block rounded-[12px] outline-offset-4">
-        <div className="relative aspect-[16/10] overflow-hidden rounded-[12px] bg-fill shadow-card transition-shadow duration-300 ease-(--ease-mac) group-hover:shadow-card-hover">
+      <Link href={`/w/${lead.slug}`} className="group block rounded-[22px] outline-offset-4">
+        <div className="relative aspect-[16/10] overflow-hidden rounded-[22px] bg-fill shadow-card transition-shadow duration-300 ease-(--ease-mac) group-hover:shadow-card-hover">
           <Image
             src={displayUrl(lead)}
             alt={`${displayTitle(lead.title)} desktop wallpaper`}

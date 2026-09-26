@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { StarFill } from "@/components/ui/icons";
 import { displayTitle } from "@/lib/format";
 import { displayUrl } from "@/lib/storage";
@@ -7,6 +8,7 @@ import { IPadFrame, IPhoneFrame, MacBookFrame, MonitorFrame } from "./Devices";
 import { Parallax } from "./Parallax";
 import { Reveal } from "./Reveal";
 import { Scene } from "./Scene";
+import { withResLabels } from "@/components/ui/ResolutionBadge";
 
 /**
  * Every demonstration runs itself as a short sequence — fade in, move, transform, then hold on the
@@ -49,36 +51,52 @@ function alt(w: Wallpaper) {
 
 function Tier({ plus }: { plus?: boolean }) {
   return (
-    <span className="inline-flex h-[22px] items-center gap-1 rounded-full bg-premium/12 px-2.5 text-[12px] font-semibold text-premium">
+    <span className="inline-flex h-[22px] items-center gap-1 rounded-full bg-premium/15 px-2.5 text-[11.5px] font-semibold text-premium ring-1 ring-premium/25 backdrop-blur-sm">
       {plus && <StarFill width={9} height={9} className="text-premium" />}
       {plus ? "Premium+" : "Premium"}
     </span>
   );
 }
 
-/** One demonstration: a short caption beside the thing itself. */
-function Demo({
+/**
+ * One tile of the bento: the demonstration fills it and the caption sits along the bottom, so the
+ * card reads as a thing playing rather than a paragraph with a picture next to it.
+ *
+ * Each tile is its own `Scene`, which means its sequence starts when that tile arrives and rewinds
+ * once it has gone — seven sequences never run at once off screen.
+ */
+function Card({
   tier,
   title,
   body,
-  flip,
+  span = "",
+  pad = "p-5 sm:p-6",
   children,
 }: {
   tier: React.ReactNode;
   title: string;
   body: string;
-  /** Put the caption on the right instead, so the rows alternate down the page. */
-  flip?: boolean;
+  /** Where the tile sits in the grid. Whole class strings: Tailwind never sees a fragment. */
+  span?: string;
+  pad?: string;
   children: React.ReactNode;
 }) {
   return (
-    <Scene className="grid items-center gap-6 lg:grid-cols-2 lg:gap-12">
-      <div className={`min-w-0 ${flip ? "lg:order-2" : ""}`}>
-        {tier}
-        <h3 className="mt-3.5 font-display text-[25px] font-semibold tracking-[-0.02em] text-label sm:text-[29px]">{title}</h3>
-        <p className="mt-2.5 max-w-[46ch] text-[16px] leading-relaxed text-label-2 sm:text-[17px]">{body}</p>
+    <Scene
+      className={`group flex flex-col overflow-hidden rounded-[20px] bg-white transition-[box-shadow,translate] duration-300 ease-(--ease-mac) [box-shadow:0_0_0_0.5px_rgb(0_0_0/0.06),0_12px_32px_-18px_rgb(20_40_90/0.22)] [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:[box-shadow:0_0_0_0.5px_rgb(0_0_0/0.08),0_20px_40px_-18px_rgb(20_40_90/0.28)] ${span}`}
+    >
+      <div className={`flex flex-1 items-center justify-center bg-[linear-gradient(180deg,#eef3fa_0%,#f7f9fc_100%)] ${pad}`}>
+        <div className="w-full">{children}</div>
       </div>
-      <div className="min-w-0">{children}</div>
+      <div className="px-5 py-4 sm:px-6 sm:py-5">
+        <div className="flex flex-wrap items-center gap-2">
+          {tier}
+          <h3 className="font-display text-[17px] font-semibold tracking-[-0.018em] text-label sm:text-[18px]">
+            {withResLabels(title)}
+          </h3>
+        </div>
+        <p className="mt-1.5 max-w-[46ch] text-[13px] leading-relaxed text-label-2">{withResLabels(body)}</p>
+      </div>
     </Scene>
   );
 }
@@ -99,7 +117,7 @@ function Resolution({ w }: { w: Wallpaper }) {
   const start = 0.55;
   return (
     <Parallax amount={10}>
-      <MacBookFrame className="mx-auto w-[94%] [animation:device-in_0.7s_var(--ease-mac)_both] sm:w-[92%]">
+      <MacBookFrame className="mx-auto w-full [animation:device-in_0.7s_var(--ease-mac)_both]">
         {/* The screen's contents move, not the frame: a camera push, not a growing laptop. */}
         <div
           className="absolute inset-0 [animation:push-in_7s_var(--ease-mac)_both]"
@@ -237,7 +255,7 @@ function MultiMonitor({ w }: { w: Wallpaper }) {
                 alt={i === 1 ? `${alt(w)} across three displays` : ""}
                 fill
                 sizes="(min-width: 1024px) 560px, 100vw"
-                className="object-cover"
+                className="object-cover object-[50%_42%]"
               />
             </div>
           </MonitorFrame>
@@ -265,7 +283,7 @@ const MOTES = [
 function Live({ w }: { w: Wallpaper }) {
   return (
     <Parallax amount={8}>
-      <MacBookFrame className="mx-auto w-[94%] [animation:device-in_0.7s_var(--ease-mac)_both] sm:w-[92%]">
+      <MacBookFrame className="mx-auto w-full [animation:device-in_0.7s_var(--ease-mac)_both]">
         {/* The breath. `alternate` returns it to exactly where it started, so the loop has no cut. */}
         <Image
           src={displayUrl(w)}
@@ -331,7 +349,7 @@ function DayNight({ w }: { w: Wallpaper }) {
   const START = "0.6s";
   return (
     <Parallax amount={8}>
-      <div className="mx-auto w-[94%] sm:w-[92%]">
+      <div className="mx-auto w-full">
         <MonitorFrame className="[animation:device-in_0.7s_var(--ease-mac)_both]">
           <Image
             src={displayUrl(w)}
@@ -397,7 +415,7 @@ function Series({ cast }: { cast: Cast }) {
   ];
   return (
     // Tall enough for a fanned card: they are 46% wide and turn up to 9°.
-    <div className="relative aspect-[2/1] w-full">
+    <div className="relative aspect-[2.4/1] w-full">
       {cards.map((c, i) => {
         const focus = `${FANNED + i * 0.9}s`;
         return (
@@ -440,7 +458,7 @@ function Series({ cast }: { cast: Cast }) {
 function Request({ w }: { w: Wallpaper }) {
   return (
     <div className="relative">
-      <MacBookFrame className="mx-auto w-[94%] [animation:device-in_0.7s_var(--ease-mac)_both] sm:w-[92%]">
+      <MacBookFrame className="mx-auto w-full [animation:device-in_0.7s_var(--ease-mac)_both]">
         {/* The screen waits, empty, until there is something to put on it. */}
         <div aria-hidden className="absolute inset-0 bg-fill-2" />
         <Image
@@ -489,77 +507,95 @@ export function PremiumShowcase({ wallpapers }: { wallpapers: Wallpaper[] }) {
   if (!cast) return null;
 
   return (
-    // Panels slide in from off their own edges and cards fan past theirs; clip so neither can
-    // widen the page on a phone. `clip`, not `hidden`: no scroll container, no trapped fixed children.
-    <section aria-labelledby="showcase-title" className="overflow-x-clip">
-      <Reveal className="max-w-[720px]">
-        <h2 id="showcase-title" className="font-display text-[30px] font-semibold tracking-[-0.021em] text-label sm:text-[36px]">
-          What Premium adds
-        </h2>
-        <p className="mt-2 text-[15px] leading-snug text-label-2 sm:text-[16px]">
-          Shown with wallpapers from the free library. The premium versions go further in every direction.
-        </p>
+    <section aria-labelledby="showcase-title" className="relative isolate overflow-x-clip">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-[-1.5rem] -top-6 bottom-8 -z-10 bg-[radial-gradient(70%_42%_at_50%_0%,#e4efff_0%,transparent_72%)] [mask-image:linear-gradient(180deg,black_0%,black_58%,transparent_100%)] lg:inset-x-[-2.5rem]"
+      />
+
+      <Reveal className="mb-8 flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="mb-1 text-[13px] font-semibold text-premium">Premium</p>
+          <h2
+            id="showcase-title"
+            className="font-display text-[30px] font-semibold tracking-[-0.021em] text-label sm:text-[36px]"
+          >
+            What Premium adds
+          </h2>
+          <p className="mt-1 max-w-[50ch] text-[14px] text-label-2 sm:text-[15px]">
+            Shown with wallpapers from the free library. Every tile is playing, not a still.
+          </p>
+        </div>
+        <Link href="/premium" className="shrink-0 rounded-md text-[14px] font-medium text-accent hover:underline">
+          See all
+        </Link>
       </Reveal>
 
-      <div className="mt-9 flex flex-col gap-12 lg:gap-16">
-        <Demo
+      <div className="grid auto-rows-[minmax(0,auto)] gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+        <Card
+          span="sm:col-span-2 lg:col-span-2 lg:row-span-2"
+          pad="p-6 sm:p-9"
           tier={<Tier />}
           title="4K, 6K, then 8K"
-          body="Premium downloads go to 6K and Premium+ to 8K, so the same scene keeps its detail on a 6K display or a Pro Display XDR."
+          body="Premium goes to 6K and Premium+ to 8K, so the same scene keeps its detail on a Pro Display XDR."
         >
           <Resolution w={cast.resolution} />
-        </Demo>
+        </Card>
 
-        <Demo
-          flip
+        <Card
+          span="sm:col-span-2 lg:col-span-1"
           tier={<Tier plus />}
           title="Cut for your screen"
-          body="Each wallpaper is reframed per shape — desktop, tablet, phone — instead of one crop stretched to fit them all."
+          body="Reframed per shape — desktop, tablet, phone — not one crop stretched to fit all three."
         >
           <Screens w={cast.screens} />
-        </Demo>
+        </Card>
 
-        <Demo
+        <Card
           tier={<Tier plus />}
-          title="Made to span displays"
-          body="Multi-monitor packs come pre-cut, so one picture runs across two or three screens without a seam in the wrong place."
+          title="Exclusive series"
+          body="Whole sets built around one subject, with a new drop every month."
         >
-          <MultiMonitor w={cast.panorama} />
-        </Demo>
+          <Series cast={cast} />
+        </Card>
 
-        <Demo
-          flip
+        <Card
+          span="sm:col-span-2 lg:col-span-2"
+          pad="p-6 sm:p-8"
           tier={<Tier plus />}
           title="Wallpapers that move"
           body="Live wallpapers drift slowly behind your icons: enough to feel alive on wake, never enough to pull your eye."
         >
           <Live w={cast.live} />
-        </Demo>
+        </Card>
 
-        <Demo
+        <Card
           tier={<Tier plus />}
-          title="A wallpaper that follows the sun"
-          body="Dynamic wallpapers shift with your clock — bright through the morning, warm at golden hour, dark after sunset."
+          title="Follows the sun"
+          body="Bright through the morning, warm at golden hour, dark after sunset."
         >
           <DayNight w={cast.daynight} />
-        </Demo>
+        </Card>
 
-        <Demo
-          flip
+        <Card
+          span="sm:col-span-2"
+          pad="p-6 sm:p-8"
           tier={<Tier plus />}
-          title="Exclusive series"
-          body="Whole sets built around one subject — games, cars, anime, movies — with a new drop every month."
+          title="Made to span displays"
+          body="One picture cut across two or three screens, with no seam in the wrong place."
         >
-          <Series cast={cast} />
-        </Demo>
+          <MultiMonitor w={cast.panorama} />
+        </Card>
 
-        <Demo
+        <Card
+          span="sm:col-span-2"
+          pad="p-6 sm:p-8"
           tier={<Tier plus />}
           title="Ask for the one you want"
-          body="Premium+ members can request a wallpaper. Describe the scene and the ratio, and it gets made and added to your library."
+          body="Describe the scene and the ratio. It gets made, and it lands in your library."
         >
           <Request w={cast.custom} />
-        </Demo>
+        </Card>
       </div>
     </section>
   );

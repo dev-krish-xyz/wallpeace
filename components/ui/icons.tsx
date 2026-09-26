@@ -32,6 +32,18 @@ export const ArrowDown = (p: IconProps) => (
   </svg>
 );
 
+export const ArrowRight = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M3.5 10h13M11 4.5 16.5 10 11 15.5" />
+  </svg>
+);
+
+export const ArrowUpRight = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M6 14 14 6M6.8 6H14v7.2" />
+  </svg>
+);
+
 export const Photo = (p: IconProps) => (
   <svg {...base(p)}>
     <rect x="2.5" y="4" width="15" height="12" rx="2.5" />
@@ -83,71 +95,75 @@ export const Menu = (p: IconProps) => (
 );
 
 // --- Premium feature glyphs ------------------------------------------------------------------
+// Drawn on the same 20x20 grid as the rest, and each one says what the feature is rather than
+// gesturing at it: the resolution mark nests two frames, the screens mark is three real devices.
 
-/** Resolution: a frame with a corner pulled out. */
+/** Resolution: a frame inside a frame, the way a larger master contains the smaller one. */
 export const Resolution = (p: IconProps) => (
   <svg {...base(p)}>
-    <rect x="2.75" y="4.25" width="14.5" height="11.5" rx="2.25" />
-    <path d="M7.5 12.5V7.5h5M12.5 12.5H10" />
+    <rect x="2.25" y="4" width="15.5" height="12" rx="2.25" />
+    <rect x="6" y="7.25" width="8" height="5.5" rx="1.25" opacity="0.55" />
   </svg>
 );
 
-/** Screen variations: a desktop with a phone beside it. */
+/** Screen variations: a desktop, a tablet and a phone, each its own shape. */
 export const Devices = (p: IconProps) => (
   <svg {...base(p)}>
-    <path d="M2.5 5.25A1.75 1.75 0 0 1 4.25 3.5h7a1.75 1.75 0 0 1 1.75 1.75v6.25M5.5 15h4" />
-    <rect x="14.25" y="7.5" width="3.5" height="8.5" rx="1.25" />
+    <rect x="1.5" y="4.5" width="9" height="7" rx="1.5" />
+    <path d="M4 14h4" />
+    <rect x="12.25" y="4.5" width="6.25" height="11" rx="1.5" opacity="0.55" />
   </svg>
 );
 
-/** Multi-monitor: three panels in a row. */
+/** Multi-monitor: three panels on one desk line, the middle one square on. */
 export const Displays = (p: IconProps) => (
   <svg {...base(p)}>
-    <rect x="1.5" y="5.5" width="5" height="9" rx="1.25" />
-    <rect x="7.5" y="5.5" width="5" height="9" rx="1.25" />
-    <rect x="13.5" y="5.5" width="5" height="9" rx="1.25" />
+    <rect x="6.75" y="4.25" width="6.5" height="8" rx="1.25" />
+    <path d="M1.75 5.75h3.5v7h-3.5zM14.75 5.75h3.5v7h-3.5z" opacity="0.55" />
+    <path d="M2 15.5h16" />
   </svg>
 );
 
-/** Live: a play mark inside a rounded frame. */
+/** Live: the play mark, with the motion coming off it. */
 export const Live = (p: IconProps) => (
   <svg {...base(p)}>
-    <rect x="2.75" y="3.75" width="14.5" height="12.5" rx="2.5" />
-    <path d="m8.5 7.75 4 2.25-4 2.25z" fill="currentColor" strokeWidth="1.25" />
+    <path d="M8.25 6.5 13 10l-4.75 3.5z" />
+    <path d="M3.4 5.4a6.5 6.5 0 0 0 0 9.2M16.6 5.4a6.5 6.5 0 0 1 0 9.2" opacity="0.55" />
   </svg>
 );
 
-/** Dynamic day to night: a sun rising over a horizon. */
+/** Dynamic: the sun on one side of the line, the moon on the other. */
 export const Daylight = (p: IconProps) => (
   <svg {...base(p)}>
-    <path d="M2.5 14.5h15" />
-    <circle cx="10" cy="10.5" r="3.25" />
-    <path d="M10 3.5v1.5M4.4 5.4l1.1 1.1M15.6 5.4l-1.1 1.1M2.75 10.5h1.5M15.75 10.5h1.5" />
+    <path d="M1.75 10.75h16.5" />
+    <circle cx="6.25" cy="6.75" r="2.5" />
+    <path d="M17 5.5a3.1 3.1 0 1 1-3.3-3.1A3.6 3.6 0 0 0 17 5.5Z" opacity="0.55" />
+    <path d="M4 15.5h3.5M10 15.5h6" opacity="0.55" />
   </svg>
 );
 
-/** Exclusive series: cards stacked behind one another. */
+/** A series: one wallpaper in front, the rest of the set behind it. */
 export const Series = (p: IconProps) => (
   <svg {...base(p)}>
-    <rect x="6.5" y="3" width="11" height="11" rx="2.25" />
-    <path d="M13.5 17H5A2.5 2.5 0 0 1 2.5 14.5V6.5" />
+    <rect x="2.25" y="6.5" width="11.5" height="9.5" rx="2" />
+    <path d="M5.75 4.25h9a2.5 2.5 0 0 1 2.5 2.5v6.5" opacity="0.55" />
   </svg>
 );
 
-/** A custom request: a message with a spark in it. */
+/** A request: what you asked for, and the spark that answers it. */
 export const Request = (p: IconProps) => (
   <svg {...base(p)}>
-    <path d="M17 10.5a6 6 0 0 1-6 6H7l-3.5 2 .8-3A6 6 0 0 1 9 4.5h2a6 6 0 0 1 6 6Z" />
-    <path d="m10 7.5.9 1.85 1.85.9-1.85.9-.9 1.85-.9-1.85-1.85-.9 1.85-.9z" fill="currentColor" strokeWidth="1" />
+    <path d="M17 9.75a5.75 5.75 0 0 1-5.75 5.75H7.5L3.75 17.5l.9-3.1A5.75 5.75 0 0 1 8.25 4h3a5.75 5.75 0 0 1 5.75 5.75Z" />
+    <path d="m11 6.75.75 1.75 1.75.75-1.75.75-.75 1.75-.75-1.75L8.5 9.25l1.75-.75z" opacity="0.55" />
   </svg>
 );
 
-/** The whole library, as a grid of wallpapers. */
+/** The library: a wall of wallpapers, one of them yours. */
 export const Library = (p: IconProps) => (
   <svg {...base(p)}>
-    <rect x="2.5" y="2.5" width="6.5" height="6.5" rx="1.75" />
-    <rect x="11" y="2.5" width="6.5" height="6.5" rx="1.75" />
-    <rect x="2.5" y="11" width="6.5" height="6.5" rx="1.75" />
-    <rect x="11" y="11" width="6.5" height="6.5" rx="1.75" />
+    <rect x="2.25" y="2.75" width="6.5" height="6.5" rx="1.5" />
+    <rect x="11.25" y="2.75" width="6.5" height="6.5" rx="1.5" opacity="0.55" />
+    <rect x="2.25" y="10.75" width="6.5" height="6.5" rx="1.5" opacity="0.55" />
+    <rect x="11.25" y="10.75" width="6.5" height="6.5" rx="1.5" />
   </svg>
 );

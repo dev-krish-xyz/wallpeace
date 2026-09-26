@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { QA } from "@/components/site/Faq";
 import { Faq } from "@/components/site/Faq";
-import { PremiumFeatures } from "@/components/site/Premium";
+import { PremiumFeatures, PremiumPanel } from "@/components/site/Premium";
 import { Pricing } from "@/components/site/Pricing";
 import { PremiumShowcase } from "@/components/site/PremiumShowcase";
 import { PageBody } from "@/components/site/Section";
@@ -55,7 +55,17 @@ export default async function PremiumPage() {
 
         </div>
 
-        <PremiumFeatures />
+        <PremiumPanel>
+          <h2 className="font-display text-[30px] font-semibold tracking-[-0.021em] text-white sm:text-[36px]">
+            What you get
+          </h2>
+          <p className="mt-3 max-w-[56ch] text-[15px] leading-relaxed text-white/60 sm:text-[16px]">
+            Every feature below is included for life, on a single payment.
+          </p>
+          <div className="mt-10">
+            <PremiumFeatures />
+          </div>
+        </PremiumPanel>
 
         <PremiumShowcase wallpapers={wallpapers} />
 

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { StarFill } from "@/components/ui/icons";
+import { ResLabel } from "@/components/ui/ResolutionBadge";
 
 const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
@@ -42,7 +43,7 @@ export function SiteFooter() {
             </Link>
             <p className="mt-3 text-[13px] leading-relaxed text-label-2">
               Original desktop wallpapers, made one at a time and checked on a real display. The open library is
-              free to download, in 4K, with no account.
+              free to download, in <ResLabel>4K</ResLabel>, with no account.
             </p>
           </div>
 

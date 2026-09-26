@@ -22,7 +22,7 @@ const SCREEN = "relative overflow-hidden bg-fill";
 export function MacBookFrame({ className = "", style, children }: FrameProps) {
   return (
     <div className={className} style={style}>
-      <div className={`relative rounded-[8px] p-[2.6%] shadow-card sm:rounded-[11px] ${BEZEL}`}>
+      <div className={`relative rounded-[7px] p-[1.6%] shadow-card sm:rounded-[10px] ${BEZEL}`}>
         {/* Camera. At this size it is one pixel of hint, which is all it needs to be. */}
         <div aria-hidden className="absolute inset-x-0 top-[1%] mx-auto size-[2px] rounded-full bg-white/25" />
         <div className={`${SCREEN} aspect-[16/10] rounded-[3px] sm:rounded-[5px]`}>{children}</div>
@@ -39,7 +39,7 @@ export function MacBookFrame({ className = "", style, children }: FrameProps) {
 export function IPadFrame({ className = "", style, children }: FrameProps) {
   return (
     <div className={className} style={style}>
-      <div className={`rounded-[10px] p-[3.4%] shadow-card sm:rounded-[13px] ${BEZEL}`}>
+      <div className={`rounded-[9px] p-[2.2%] shadow-card sm:rounded-[12px] ${BEZEL}`}>
         <div className={`${SCREEN} aspect-[3/4] rounded-[6px] sm:rounded-[8px]`}>{children}</div>
       </div>
     </div>
@@ -50,7 +50,7 @@ export function IPadFrame({ className = "", style, children }: FrameProps) {
 export function IPhoneFrame({ className = "", style, children }: FrameProps) {
   return (
     <div className={className} style={style}>
-      <div className={`rounded-[13px] p-[5.5%] shadow-card sm:rounded-[16px] ${BEZEL}`}>
+      <div className={`rounded-[12px] p-[3.6%] shadow-card sm:rounded-[15px] ${BEZEL}`}>
         <div className={`${SCREEN} aspect-[9/19.5] rounded-[8px] sm:rounded-[11px]`}>
           {children}
           <div
@@ -67,7 +67,7 @@ export function IPhoneFrame({ className = "", style, children }: FrameProps) {
 export function MonitorFrame({ className = "", style, children }: FrameProps) {
   return (
     <div className={className} style={style}>
-      <div className={`rounded-[5px] p-[1.8%] shadow-card sm:rounded-[7px] ${BEZEL}`}>
+      <div className={`rounded-[4px] p-[1%] shadow-card sm:rounded-[6px] ${BEZEL}`}>
         <div className={`${SCREEN} aspect-[16/9] rounded-[2px] sm:rounded-[3px]`}>{children}</div>
       </div>
       <div aria-hidden>

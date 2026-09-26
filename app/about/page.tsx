@@ -3,6 +3,7 @@ import Image from "next/image";
 import { PageBody } from "@/components/site/Section";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { ButtonLink } from "@/components/ui/Button";
+import { withResLabels } from "@/components/ui/ResolutionBadge";
 
 export const metadata: Metadata = {
   title: "About",
@@ -65,8 +66,8 @@ export default function AboutPage() {
                 {i + 1}
               </span>
               <div>
-                <h3 className="text-[15px] font-semibold text-label">{step.title}</h3>
-                <p className="mt-0.5 text-[14px] leading-relaxed text-label-2">{step.body}</p>
+                <h3 className="text-[15px] font-semibold text-label">{withResLabels(step.title)}</h3>
+                <p className="mt-0.5 text-[14px] leading-relaxed text-label-2">{withResLabels(step.body)}</p>
               </div>
             </li>
           ))}

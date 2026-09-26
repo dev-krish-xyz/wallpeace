@@ -1,5 +1,6 @@
 import { ChevronRight } from "@/components/ui/icons";
 import { Reveal } from "./Reveal";
+import { withResLabels } from "@/components/ui/ResolutionBadge";
 
 export type QA = { q: string; a: string };
 
@@ -70,7 +71,7 @@ export function Faq({
                 className="shrink-0 text-label-3 transition-transform duration-300 ease-(--ease-mac) group-open:rotate-90 motion-reduce:transition-none"
               />
             </summary>
-            <p className="px-5 pb-5 text-[14px] leading-relaxed text-label-2 sm:px-6">{item.a}</p>
+            <p className="px-5 pb-5 text-[14px] leading-relaxed text-label-2 sm:px-6">{withResLabels(item.a)}</p>
           </details>
         ))}
       </div>

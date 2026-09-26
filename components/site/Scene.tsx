@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Start playing once this much of the row has come into the viewport.
-const ENTER = "0px 0px -12% 0px";
+// Start playing as the row reaches the fold rather than once it is well inside it: waiting left a
+// blank stretch on screen while the sequence was still holding at frame zero.
+const ENTER = "0px 0px 8% 0px";
 
 /**
  * A demonstration that plays itself. Like `Reveal`, but it rewinds: once the row is entirely off
