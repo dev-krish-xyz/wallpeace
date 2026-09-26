@@ -204,22 +204,6 @@ body {
   }
 }
 
-/* Weather: one soft band of light crossing the sky, invisible at both ends of its loop. */
-@keyframes cloud-pass {
-  0% {
-    opacity: 0;
-    transform: translateX(-30%);
-  }
-  22%,
-  78% {
-    opacity: 0.85;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(30%);
-  }
-}
-
 /* Embers, fireflies, spray — whatever the scene makes of a few drifting motes. */
 @keyframes float {
   0% {
@@ -233,21 +217,6 @@ body {
   100% {
     opacity: 0;
     transform: translateY(-26px);
-  }
-}
-
-/* Stars, out only for the night stretch of the daylight cycle it shares. */
-@keyframes stars {
-  0%,
-  56% {
-    opacity: 0;
-  }
-  72%,
-  90% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
   }
 }
 
@@ -319,56 +288,7 @@ body {
   }
 }
 
-/* A light pass across the frame, to read as "playing". */
-@keyframes sweep {
-  from {
-    transform: translateX(-130%) skewX(-12deg);
-  }
-  to {
-    transform: translateX(240%) skewX(-12deg);
-  }
-}
 
-/* One 12s day: clear, then the warm hour, then night. Layers below share the cycle. */
-@keyframes daylight {
-  0%,
-  22% {
-    opacity: 0;
-    background: rgb(255 159 10 / 0.3);
-  }
-  38%,
-  52% {
-    opacity: 1;
-    background: rgb(255 132 30 / 0.34);
-  }
-  70%,
-  92% {
-    opacity: 1;
-    background: rgb(10 24 68 / 0.52);
-  }
-  100% {
-    opacity: 0;
-    background: rgb(255 159 10 / 0.3);
-  }
-}
-
-@keyframes daylight-tone {
-  0%,
-  22% {
-    filter: none;
-  }
-  38%,
-  52% {
-    filter: saturate(1.12) brightness(1.02);
-  }
-  70%,
-  92% {
-    filter: saturate(0.82) brightness(0.72);
-  }
-  100% {
-    filter: none;
-  }
-}
 
 /* Highlights one label of three; the three share it through animation-delay. */
 @keyframes phase {
@@ -394,6 +314,125 @@ body {
 
 @keyframes caret {
   50% {
+    opacity: 0;
+  }
+}
+
+/* A dynamic wallpaper through one 12s day. The day picture sits underneath; sunset fades in over
+ * it, night over that, and both fade out together at the end so the day returns without a cut. The
+ * windows line up with the `phase` labels under the display (lit 0–30% of each third). */
+@keyframes dyn-sunset {
+  0%,
+  28% {
+    opacity: 0;
+  }
+  36%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes dyn-night {
+  0%,
+  61% {
+    opacity: 0;
+  }
+  69%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* A stage of a sequence being reached: dim until its moment, then lit for good. */
+@keyframes step-on {
+  from {
+    opacity: 0.35;
+  }
+}
+
+/* A coverflow deck: one card's walk through six slots — front, out to the left, behind the
+ * others, back in from the right. Every card runs it, offset by its place in the deck. */
+@keyframes deck {
+  0%,
+  11.667% {
+    transform: none;
+    opacity: 1;
+    filter: none;
+    z-index: 6;
+  }
+  16.667%,
+  28.333% {
+    transform: translateX(-62%) scale(0.84);
+    opacity: 0.8;
+    filter: blur(1.5px);
+    z-index: 5;
+  }
+  33.333%,
+  45% {
+    transform: translateX(-106%) scale(0.72);
+    opacity: 0.45;
+    filter: blur(3px);
+    z-index: 4;
+  }
+  50%,
+  61.667% {
+    transform: scale(0.56);
+    opacity: 0;
+    filter: blur(4px);
+    z-index: 1;
+  }
+  66.667%,
+  78.333% {
+    transform: translateX(106%) scale(0.72);
+    opacity: 0.45;
+    filter: blur(3px);
+    z-index: 4;
+  }
+  83.333%,
+  95% {
+    transform: translateX(62%) scale(0.84);
+    opacity: 0.8;
+    filter: blur(1.5px);
+    z-index: 5;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+    filter: none;
+    z-index: 6;
+  }
+}
+
+/* A wallpaper being made: a coloured haze that gathers into focus. */
+@keyframes generate {
+  0% {
+    opacity: 0;
+    filter: blur(28px) saturate(0.4) brightness(1.15);
+    transform: scale(1.12);
+  }
+  20% {
+    opacity: 0.85;
+  }
+  65% {
+    filter: blur(6px) saturate(0.85);
+    transform: scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+/* One typed character. */
+@keyframes char-in {
+  from {
     opacity: 0;
   }
 }

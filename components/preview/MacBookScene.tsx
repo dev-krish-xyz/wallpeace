@@ -20,6 +20,9 @@ const PHONE = "(max-width: 639px)";
 // Phones have 3x screens; rendering at 2x there makes the wallpaper on the screen look soft.
 const isPhone = () => typeof window !== "undefined" && window.matchMedia(PHONE).matches;
 
+// The camera a touch nearer than the eye line's own length, so the laptop fills more of the stage.
+const HERO_CLOSER = 0.92;
+
 // Breathing room around the laptop in full screen: 1 would touch the edges.
 const FULLSCREEN_MARGIN = 1.12;
 
@@ -82,7 +85,7 @@ function Framing({ fullscreen, ready }: { fullscreen: boolean; ready: boolean })
       invalidate();
       return;
     }
-    const distance = EYE_LENGTH * (isPhone() ? 0.96 : 1) * Math.max(1, 1.62 / aspect);
+    const distance = EYE_LENGTH * HERO_CLOSER * (isPhone() ? 0.96 : 1) * Math.max(1, 1.62 / aspect);
     camera.position.copy(EYE).normalize().multiplyScalar(distance).add(new Vector3(...TARGET));
     camera.lookAt(...TARGET);
     camera.updateProjectionMatrix();

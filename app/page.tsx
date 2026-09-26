@@ -6,9 +6,10 @@ import { WallpaperMarquee } from "@/components/gallery/WallpaperMarquee";
 import { BrandBanner } from "@/components/site/BrandBanner";
 import { BrowseLibrary } from "@/components/site/BrowseLibrary";
 import { Faq, SITE_FAQ } from "@/components/site/Faq";
-import { PremiumShowcase } from "@/components/site/PremiumShowcase";
+import { PremiumFeatureShowcaseV2 } from "@/components/site/PremiumFeatureShowcaseV2";
 import { Pricing } from "@/components/site/Pricing";
 import { Reveal } from "@/components/site/Reveal";
+import { ScrollRise } from "@/components/site/ScrollRise";
 import { PageBody, Section } from "@/components/site/Section";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { Studio } from "@/components/studio/Studio";
@@ -55,7 +56,9 @@ export default async function HomePage() {
         syncUrl={false}
       />
 
-      <div className="border-t border-separator">
+      {/* `overflow-x-clip` guards the full-bleed showcase against a scrollbar-wide sideways scroll;
+       *  clip, not hidden, so its pinned stage still sticks. */}
+      <div className="overflow-x-clip border-t border-separator">
         <PageBody className="flex flex-col gap-16 lg:gap-20">
           <BrandBanner />
           <Section
@@ -76,9 +79,21 @@ export default async function HomePage() {
             </Section>
           )}
 
-          <PremiumShowcase wallpapers={wallpapers} />
+          {/* Full-bleed: out of the page column to the viewport edges. V1 (`PremiumShowcase`) is
+           *  still on /premium for comparison. */}
+          <div className="mx-[calc(50%-50vw)]">
+            <PremiumFeatureShowcaseV2 wallpapers={wallpapers} />
+          </div>
 
-          <Pricing />
+          {/* Grows into place with the scroll as it arrives, so leaving the showcase's stage visibly
+           *  hands over to it. */}
+          {/* `data-showcase-next`: where a scroll off the showcase's last chapter glides to. Kept off
+           *  the moving element, so the target is measured from where it will come to rest. */}
+          <div data-showcase-next>
+            <ScrollRise>
+              <Pricing />
+            </ScrollRise>
+          </div>
 
           <Faq items={SITE_FAQ} subtitle="The short answers. The longer ones are on the premium page." />
 
@@ -109,7 +124,7 @@ function FeaturedLead({ wallpaper: lead }: { wallpaper: Wallpaper }) {
         </div>
       </Link>
       <div className="min-w-0">
-        <h3 className="font-display text-[30px] font-semibold tracking-[-0.021em] text-label sm:text-[36px]">{displayTitle(lead.title)}</h3>
+        <h3 className="font-display text-[26px] leading-tight font-semibold tracking-[-0.021em] text-label sm:text-[36px]">{displayTitle(lead.title)}</h3>
         <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-label-2 tabular-nums">
           {formatResolution(lead.width, lead.height)}
           <ResolutionBadge width={lead.width} height={lead.height} />

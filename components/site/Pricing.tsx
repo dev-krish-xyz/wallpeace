@@ -216,8 +216,8 @@ function TierCard({ tier }: { tier: Tier }) {
 
       <div className="px-6 pt-6 pb-5">
         <div className="flex items-start gap-2">
-          {tier.star && <StarFill width={16} height={16} className="mt-0.5 text-premium" />}
-          <h3 className="font-display text-[19px] font-semibold tracking-[-0.015em] text-label">{tier.name}</h3>
+          {tier.star && <StarFill width={17} height={17} className="mt-1 text-premium" />}
+          <h3 className="font-display text-[23px] leading-tight font-bold tracking-[-0.025em] text-label">{tier.name}</h3>
           {/* The circle arrow is the card's affordance: its ::after makes the whole card the target. */}
           <Link
             href={tier.cta.href}
@@ -320,12 +320,12 @@ export function Pricing() {
 
         <h2
           id="pricing-title"
-          className="mx-auto mt-4 max-w-[20ch] font-display text-[35px] leading-[1.04] font-bold tracking-[-0.032em] text-white sm:text-[45px] lg:text-[49px]"
+          className="mx-auto mt-5 max-w-[20ch] font-display text-[40px] leading-[0.98] font-bold tracking-[-0.04em] text-white sm:text-[54px] lg:text-[64px]"
         >
           The best your desktop has ever looked starts here
         </h2>
 
-        <p className="mx-auto mt-3 max-w-[48ch] text-[14px] leading-snug text-white/85 sm:text-[15px]">
+        <p className="mx-auto mt-5 max-w-[48ch] text-[16px] leading-snug text-white/85 sm:text-[19px]">
           A simpler way to find wallpapers worth keeping, download them at the size your display deserves, and pay
           for them once.
         </p>

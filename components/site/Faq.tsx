@@ -1,4 +1,4 @@
-import { ChevronRight } from "@/components/ui/icons";
+import { Plus } from "@/components/ui/icons";
 import { Reveal } from "./Reveal";
 import { withResLabels } from "@/components/ui/ResolutionBadge";
 
@@ -65,10 +65,11 @@ export function Faq({
           >
             <summary className="flex cursor-pointer list-none items-center gap-4 px-5 py-4 text-[15px] font-semibold text-label transition-colors duration-150 hover:bg-fill [&::-webkit-details-marker]:hidden sm:px-6">
               <span className="min-w-0 flex-1">{item.q}</span>
-              <ChevronRight
-                width={15}
-                height={15}
-                className="shrink-0 text-label-3 transition-transform duration-300 ease-(--ease-mac) group-open:rotate-90 motion-reduce:transition-none"
+              {/* A plus that turns into a close mark as the answer opens. */}
+              <Plus
+                width={16}
+                height={16}
+                className="shrink-0 text-label-3 transition-transform duration-300 ease-(--ease-mac) group-open:rotate-45 motion-reduce:transition-none"
               />
             </summary>
             <p className="px-5 pb-5 text-[14px] leading-relaxed text-label-2 sm:px-6">{withResLabels(item.a)}</p>

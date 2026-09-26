@@ -21,10 +21,10 @@ export function Section({
   const actions = action ? (Array.isArray(action) ? action : [action]) : [];
   return (
     <section>
-      <Reveal className="mb-6 flex items-end justify-between gap-4 sm:mb-7">
+      <Reveal className="mb-5 flex flex-col items-start gap-2 sm:mb-7 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div className="min-w-0">
           {eyebrow && <p className="mb-1 text-[13px] font-semibold text-accent">{eyebrow}</p>}
-          <h2 className="font-display text-[30px] font-semibold tracking-[-0.021em] text-label sm:text-[36px]">{title}</h2>
+          <h2 className="font-display text-[28px] leading-tight font-semibold tracking-[-0.021em] text-label sm:text-[36px]">{title}</h2>
           {subtitle && <p className="mt-1 text-[14px] text-label-2 sm:text-[15px]">{subtitle}</p>}
         </div>
         {actions.length > 0 && (

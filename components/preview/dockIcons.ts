@@ -392,3 +392,21 @@ export function drawDock() {
 
   return { canvas, aspect: width / height };
 }
+
+/**
+ * The same icons one at a time, as PNG data URLs, for a dock laid out in HTML rather than on the
+ * dock plane: the apps in order, then the trash. Each is the bare glass squircle, no shadow.
+ */
+export function drawDockIcons() {
+  const { icon } = DOCK_PX;
+  const one = (fn: Draw) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = icon;
+    canvas.height = icon;
+    const ctx = canvas.getContext("2d")!;
+    fn(ctx, icon);
+    gloss(ctx, icon);
+    return canvas.toDataURL("image/png");
+  };
+  return { apps: ICONS.map(one), trash: one(TRASH) };
+}

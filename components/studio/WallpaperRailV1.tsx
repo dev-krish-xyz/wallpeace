@@ -8,24 +8,26 @@ import { displayUrl } from "@/lib/storage";
 import type { Wallpaper } from "@/types/database";
 import { armTicks, tick } from "./tick";
 
-// ─── Coverflow geometry ──────────────────────────────────────────────────────
-// One entry per distance from the centered card (0, 1, 2): how far along the axis it sits, as a
-// share of the card's own length on that axis, how large it is drawn, how much of it shows, how soft
-// it is and how far it is washed toward the page. Between whole distances everything interpolates,
-// so a card travelling from the back to the front passes smoothly through every step.
-const SLOTS = [
-  { offset: 0, scale: 1, opacity: 1, blur: 0, wash: 0 },
-  { offset: 0.52, scale: 0.89, opacity: 0.94, blur: 2, wash: 0.16 },
-  { offset: 0.9, scale: 0.78, opacity: 0.66, blur: 4.2, wash: 0.34 },
-];
-// Beyond the last slot a card keeps sliding out and fades to nothing by this distance.
-const FADE_OUT_AT = 2.7;
-// A card counts as arrived (glow) within this fraction of a card from the center.
+// ─── Drum geometry ───────────────────────────────────────────────────────────
+// Angle between neighbors on the drum. Smaller = bigger ring, flatter curve.
+const STEP = (34 * Math.PI) / 180;
+const MAX_ANGLE = Math.PI / 2;
+// Orb: while you turn the carousel, cards ride the surface of a cylinder (true circular path,
+// tilting with the surface). At rest the orb relaxes into a flat stack of same-size cards.
+const ORB_TILT = 0.85; // 1 = card lies exactly on the surface; a touch less keeps faces readable
+const ORB_HOLD_MS = 220; // keep the orb engaged this long after the last wheel event
+const ORB_IN_RATE = 45; // how fast the orb forms when you start turning (~3 frames)
+const ORB_OUT_RATE = 4.5; // how gently it relaxes back to flat when you stop
+// A card counts as arrived (sharpens and glows) within this fraction of a card from the center.
 const LOCK_DISTANCE = 0.03;
+const GAP = 16;
+const REST_GAP = 36; // gap between flat cards at rest
+// Depth-of-field blur by distance from the selected card, eased by CSS when the selection changes.
+const BLUR_BY_DISTANCE = [0, 1.75, 3.5];
 
 // ─── Motion ──────────────────────────────────────────────────────────────────
-// How quickly the deck eases toward its target (higher = snappier).
-const EASE_RATE = 10;
+// How quickly the ring eases toward its target (higher = snappier).
+const EASE_RATE = 11;
 // Wheel travel (px) that counts as one step. After a step the wheel locks until the gesture
 // (including trackpad momentum) goes quiet, or a new swipe starts while momentum is decaying.
 const WHEEL_STEP = 40;
@@ -44,49 +46,17 @@ const FLING_STOP_SPEED = 0.7; // hand back to the snap easing below this
 const FLING_MAX_SPEED = 26;
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const DESKTOP = "(min-width: 1024px)";
 
-/** The drawn state of a card `d` cards from the center (signed), from the slot table. */
-function slotAt(d: number) {
-  const a = Math.abs(d);
-  const last = SLOTS.length - 1;
-  if (a >= last) {
-    // Past the back slot: keep the spacing, and fade out.
-    const end = SLOTS[last];
-    const step = end.offset - SLOTS[last - 1].offset;
-    const k = clamp((a - last) / (FADE_OUT_AT - last), 0, 1);
-    return {
-      offset: Math.sign(d) * (end.offset + step * (a - last)),
-      scale: end.scale - 0.08 * (a - last),
-      opacity: end.opacity * (1 - k),
-      blur: end.blur,
-      wash: end.wash,
-    };
-  }
-  const i = Math.floor(a);
-  const t = a - i;
-  const p = SLOTS[i];
-  const q = SLOTS[i + 1];
-  return {
-    offset: Math.sign(d) * lerp(p.offset, q.offset, t),
-    scale: lerp(p.scale, q.scale, t),
-    opacity: lerp(p.opacity, q.opacity, t),
-    blur: lerp(p.blur, q.blur, t),
-    wash: lerp(p.wash, q.wash, t),
-  };
-}
-
 /**
- * Coverflow deck driven by a single `position` (in cards), not by native scrolling: the centered
- * card is the selection, drawn large and sharp at the front; its neighbours
- * stack behind it above and below, smaller, softer and washed toward the page the further back
- * they are. Wheel and arrows step one card at a time; drag follows the pointer and settles on the
- * nearest card. Vertical in the desktop sidebar, horizontal on small screens.
+ * V1 of the hero rail, kept for comparison (the live one is `WallpaperRail`).
  *
- * The previous drum carousel is kept as `WallpaperRailV1`.
+ * Drum carousel driven by a single `position` (in cards), not by native scrolling: the centered
+ * card is active; neighbors wrap around a ring, tilting back and dimming with distance. Wheel and
+ * arrows step one card at a time; drag follows the pointer and settles on the nearest card.
+ * Vertical in the desktop sidebar, horizontal on small screens.
  */
-export function WallpaperRail({
+export function WallpaperRailV1({
   wallpapers,
   selectedId,
   onSelect,
@@ -103,7 +73,8 @@ export function WallpaperRail({
   const selectedIndex = Math.max(0, wallpapers.findIndex((w) => w.id === selectedId));
   const count = wallpapers.length;
 
-  // The card the deck has come to rest on. The glow follows this, not each step.
+  // The card the ring has come to rest on. Blur and shadow follow this, not each step, so fast
+  // scrolling never restarts filter transitions mid-motion.
   const [restingIndex, setRestingIndex] = useState(selectedIndex);
   const position = useRef(selectedIndex); // what's drawn, fractional while moving
   const target = useRef(selectedIndex); // where it's heading, always a whole card
@@ -121,48 +92,49 @@ export function WallpaperRail({
   const isVertical = () => typeof window !== "undefined" && window.matchMedia(DESKTOP).matches;
 
   const tickedIndex = useRef(-1);
+  const orbLevel = useRef(0); // 0 = flat resting stack, 1 = full orb
   const lockedIndex = useRef(-1); // last card handed to setRestingIndex
   useEffect(() => armTicks(), []);
 
-  /** Pixels of travel that move the deck by one card: the spacing between the front two. */
-  const stepPx = () => {
-    const first = cardRefs.current.find(Boolean);
-    if (!first) return 1;
-    return (isVertical() ? first.offsetHeight : first.offsetWidth) * SLOTS[1].offset;
-  };
-
-  /** Draws every card from `position`. Only transform, opacity and filter change per frame. */
+  /** Draws every card from `position`. Only transform/opacity change per frame. */
   const paint = useCallback(() => {
+    const stage = stageRef.current;
     const first = cardRefs.current.find(Boolean);
-    if (!stageRef.current || !first) return;
+    if (!stage || !first) return;
     const vertical = isVertical();
-    const length = vertical ? first.offsetHeight : first.offsetWidth;
+    const pitch = (vertical ? first.offsetHeight : first.offsetWidth) + GAP;
+    const radius = pitch / STEP;
+    const restPitch = pitch - GAP + REST_GAP;
+    const level = orbLevel.current;
+    const orb = level * level * (3 - 2 * level); // smoothstep: eases in and out of the orb
 
     cardRefs.current.forEach((card, i) => {
       if (!card) return;
-      const d = i - position.current;
-      const hidden = Math.abs(d) > FADE_OUT_AT;
-      const s = slotAt(d);
-      const along = (s.offset * length).toFixed(2);
+      const s = i - position.current;
+      const angle = clamp(s * STEP, -MAX_ANGLE, MAX_ANGLE);
+      // Blend the flat resting layout into the true orb (circle of `radius`).
+      const flat = s * restPitch;
+      const along = (flat + (radius * Math.sin(angle) - flat) * orb).toFixed(2);
+      const depth = (radius * (Math.cos(angle) - 1) * orb).toFixed(2);
+      const tilt = (-angle * ORB_TILT * orb * 180) / Math.PI;
+      const facing = Math.cos(angle);
       const transform = vertical
-        ? `translate(-50%,-50%) translate3d(0,${along}px,0) scale(${s.scale.toFixed(4)})`
-        : `translate(-50%,-50%) translate3d(${along}px,0,0) scale(${s.scale.toFixed(4)})`;
-      const opacity = s.opacity.toFixed(3);
-      const filter = s.blur > 0.05 ? `blur(${s.blur.toFixed(2)}px)` : "none";
-      const wash = s.wash.toFixed(3);
-      // Nearer cards on top; the front card above everything.
-      const zIndex = String(100 - Math.round(Math.abs(d) * 10));
+        ? `translate(-50%,-50%) translate3d(0,${along}px,${depth}px) rotateX(${tilt.toFixed(2)}deg)`
+        : `translate(-50%,-50%) translate3d(${along}px,0,${depth}px) rotateY(${(-tilt).toFixed(2)}deg)`;
+      const opacity = Math.max(0, (facing - 0.1) / 0.9).toFixed(3);
+      const shade = ((1 - facing) * 0.55).toFixed(3);
+      const zIndex = String(100 - Math.round(Math.abs(s) * 4));
+      const hidden = Math.abs(s) > 2.6;
 
-      const key = `${transform}|${opacity}|${filter}|${wash}|${zIndex}|${hidden}`;
+      const key = `${transform}|${opacity}|${shade}|${zIndex}|${hidden}`;
       if (lastStyles.current[i] === key) return;
       lastStyles.current[i] = key;
       card.style.transform = transform;
       card.style.opacity = opacity;
-      card.style.filter = filter;
       card.style.zIndex = zIndex;
       card.style.visibility = hidden ? "hidden" : "visible";
       const overlay = card.lastElementChild as HTMLElement | null;
-      if (overlay) overlay.style.opacity = wash;
+      if (overlay) overlay.style.opacity = shade;
     });
 
     // Knob detent: tick whenever a new card crosses the center (drawn state only, no logic).
@@ -203,14 +175,25 @@ export function WallpaperRail({
         const diff = target.current - position.current;
         position.current = Math.abs(diff) < 0.0008 ? target.current : position.current + diff * (1 - Math.exp(-dt * EASE_RATE));
       }
+      // Visual only: the orb is engaged while you're turning (drag, wheel gesture, or travel),
+      // then relaxes to flat.
+      const engaged =
+        drag.current?.moved ||
+        fling.current !== 0 ||
+        performance.now() - wheel.current.lastEvent < ORB_HOLD_MS ||
+        Math.abs(target.current - position.current) > 0.02;
+      const goal = engaged ? 1 : 0;
+      orbLevel.current += (goal - orbLevel.current) * (1 - Math.exp(-dt * (engaged ? ORB_IN_RATE : ORB_OUT_RATE)));
+      if (!engaged && orbLevel.current < 0.002) orbLevel.current = 0;
       paint();
-      // Lock (glow) once the card has visually arrived, not after the easing tail.
+      // Lock (focus + glow) once the card has visually arrived, not after the easing tail or the orb
+      // relaxing.
       const stopped = !drag.current?.moved && Math.abs(target.current - position.current) < LOCK_DISTANCE;
       if (stopped && lockedIndex.current !== target.current) {
         lockedIndex.current = target.current;
         setRestingIndex(target.current);
       }
-      if (drag.current?.moved || fling.current !== 0 || position.current !== target.current)
+      if (drag.current?.moved || fling.current !== 0 || position.current !== target.current || orbLevel.current > 0)
         raf.current = requestAnimationFrame(frame);
       else {
         raf.current = 0;
@@ -300,13 +283,14 @@ export function WallpaperRail({
   const pointerAxis = (e: React.PointerEvent) => (isVertical() ? e.clientY : e.clientX);
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
-    fling.current = 0; // touching the deck catches it
+    fling.current = 0; // touching the rail catches it, like a spinning wheel
     target.current = clamp(Math.round(position.current), 0, count - 1);
     drag.current = { id: e.pointerId, start: pointerAxis(e), startPos: position.current, moved: false, samples: [] };
   };
   const onPointerMove = (e: React.PointerEvent) => {
     const d = drag.current;
-    if (!d || d.id !== e.pointerId) return;
+    const first = cardRefs.current.find(Boolean);
+    if (!d || d.id !== e.pointerId || !first) return;
     const delta = pointerAxis(e) - d.start;
     if (!d.moved) {
       if (Math.abs(delta) < DRAG_SLOP) return;
@@ -317,8 +301,9 @@ export function WallpaperRail({
         // Pointer already gone; the drag still works through the element's own events.
       }
     }
+    const pitch = (isVertical() ? first.offsetHeight : first.offsetWidth) + GAP;
     // Rubber-band past the ends.
-    let next = d.startPos - delta / stepPx();
+    let next = d.startPos - delta / pitch;
     if (next < 0) next *= 0.35;
     if (next > count - 1) next = count - 1 + (next - (count - 1)) * 0.35;
     position.current = next;
@@ -372,20 +357,16 @@ export function WallpaperRail({
       }}
       className={[
         "relative size-full touch-none select-none overflow-hidden",
-        // Where the front card sits: a little above center on the vertical (desktop) rail.
-        "[--center-y:50%] lg:[--center-y:calc(47%_+_12px)]",
-        "[--item-w:58vw] sm:[--item-w:36vw] lg:[--item-w:min(29vw,480px)]",
+        "[perspective:600px] lg:[perspective:650px]",
+        // Where the locked card sits: a little above center on the vertical (desktop) rail.
+        "[--center-y:50%] lg:[--center-y:calc(45%_+_12px)] [perspective-origin:50%_var(--center-y)]",
+        "[--item-w:64vw] sm:[--item-w:40vw] lg:[--item-w:min(28vw,460px)]",
+        "[mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]",
+        "lg:[mask-image:linear-gradient(to_bottom,transparent,black_14%,black_86%,transparent)]",
       ].join(" ")}
     >
-      {/* The soft pool of shadow the front card floats over. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-[calc(var(--center-y)+var(--item-w)*0.34)] left-1/2 h-[calc(var(--item-w)*0.22)] w-[calc(var(--item-w)*0.9)] -translate-x-1/2 -translate-y-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgb(0_0_0/0.22),transparent)] blur-md"
-      />
-
       {wallpapers.map((w, i) => {
         const active = i === selectedIndex;
-        const front = i === restingIndex;
         return (
           <button
             key={w.id}
@@ -399,33 +380,33 @@ export function WallpaperRail({
             tabIndex={active ? 0 : -1}
             onClick={() => (active ? undefined : goTo(i))}
             onPointerEnter={() => onPreload(w)}
-            className="absolute top-(--center-y) left-1/2 aspect-[16/10] w-(--item-w) overflow-hidden rounded-[16px] bg-fill text-left outline-offset-4 transition-[box-shadow] duration-300 ease-(--ease-mac) [backface-visibility:hidden] will-change-[transform,filter]"
+            className="absolute top-(--center-y) left-1/2 aspect-[16/10] w-(--item-w) overflow-hidden rounded-[14px] bg-fill outline-offset-4 transition-[box-shadow,filter] duration-200 ease-(--ease-mac) [backface-visibility:hidden] will-change-transform"
             style={{
-              boxShadow: front
-                ? "0 0 0 1px rgb(255 255 255 / 0.7), 0 30px 60px -22px rgb(0 0 0 / 0.5), 0 12px 24px -12px rgb(0 0 0 / 0.25)"
-                : "0 0 0 0.5px rgb(0 0 0 / 0.08), 0 14px 30px -18px rgb(0 0 0 / 0.35)",
+              filter: `blur(${BLUR_BY_DISTANCE[Math.min(Math.abs(i - restingIndex), BLUR_BY_DISTANCE.length - 1)]}px)`,
+              boxShadow: i === restingIndex
+                ? // Locked: thin bright rim + faint accent halo, over the usual drop shadow.
+                  "0 0 0 1px rgb(255 255 255 / 0.75), 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 24px -4px color-mix(in srgb, var(--accent) 35%, transparent), 0 18px 40px -16px rgb(0 0 0 / 0.45)"
+                : "0 0 0 0.5px rgb(0 0 0 / 0.1), 0 4px 12px -6px rgb(0 0 0 / 0.2)",
             }}
           >
             <Image
               src={displayUrl(w)}
               alt={`${displayTitle(w.title)} desktop wallpaper`}
               fill
-              sizes="(min-width: 1024px) 480px, 58vw"
+              sizes="(min-width: 1024px) 460px, 64vw"
               loading={Math.abs(i - restingIndex) < 3 ? "eager" : "lazy"}
               placeholder={w.blur_data_url ? "blur" : "empty"}
               blurDataURL={w.blur_data_url ?? undefined}
               draggable={false}
               className="pointer-events-none object-cover"
             />
-
-            {/* Wash toward the page, stronger the further back the card is; opacity driven by paint().
-             *  Must stay the last child. */}
-            <span aria-hidden className="pointer-events-none absolute inset-0 bg-grouped opacity-0" />
+            {/* Depth shading; opacity driven by paint(). Must stay the last child. */}
+            <span aria-hidden className="pointer-events-none absolute inset-0 bg-black opacity-0" />
           </button>
         );
       })}
 
-      {/* Step controls: stacked ↑/↓ beside the front card on desktop, ←/→ at the edges on mobile. */}
+      {/* Step controls: stacked ↑/↓ beside the active card on desktop, ←/→ at the edges on mobile. */}
       <div className="pointer-events-none absolute inset-0 z-[200] flex items-center justify-between px-2 lg:block lg:p-0">
         <div className="contents lg:absolute lg:top-(--center-y) lg:left-[calc(50%+var(--item-w)/2+18px)] lg:flex lg:-translate-y-1/2 lg:flex-col lg:gap-2">
           <button
